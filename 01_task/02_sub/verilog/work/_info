@@ -1,0 +1,85 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\jihoj\GitHub\2024_2_Verilog\01_task\01_basic\verilog
+vAddSub4b
+Z1 I`Q4FTce5G9oj7cbllan821
+Z2 VnjUNa>f530`n6`bbDXW9C0
+Z3 dC:\Users\jihoj\GitHub\2024_2_Verilog\01_task\02_sub\verilog
+Z4 w1727692308
+Z5 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/AddSub4b.v
+Z6 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/AddSub4b.v
+L0 1
+Z7 OV;L;10.1d;51
+r1
+31
+Z8 o-work work -O0
+Z9 n@add@sub4b
+Z10 !s100 fLIZ]nY1<Jjz_2z;EP:=e2
+Z11 !s108 1727694437.011000
+Z12 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/AddSub4b.v|
+Z13 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/AddSub4b.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vFA
+Z14 !s100 8z:DJ];_=Y7Pja:^AKghD0
+Z15 Ie@a9oB_IzLBRBXh3Abz?23
+Z16 VniPLCU^5_T^<_hC<[5JBJ1
+R3
+Z17 w1727679561
+Z18 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/FA.v
+Z19 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/FA.v
+L0 1
+R7
+r1
+31
+Z20 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/FA.v|
+R8
+n@f@a
+Z21 !s108 1727694437.064000
+Z22 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/FA.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vHA
+Z23 !s100 6ViS>VPL_nLNO7AifV]DO0
+Z24 I=RF;_I[8;i3OkIzAKaA0U0
+Z25 V=XD792mbkDQeT]MRmcJ2i2
+R3
+Z26 w1727679563
+Z27 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/HA.v
+Z28 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/HA.v
+L0 1
+R7
+r1
+31
+Z29 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/HA.v|
+R8
+n@h@a
+!i10b 1
+!s85 0
+Z30 !s108 1727694437.124000
+Z31 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/HA.v|
+!s101 -O0
+vtb_AddSub4b
+!i10b 1
+Z32 !s100 >IWmG2AV@lUQlDOlijj=Z1
+Z33 ICzl;aWR=I^LTR5nY[DcbA0
+Z34 V6a`f9<2TB;Q7WNKB?8>Ve0
+R3
+w1727692316
+Z35 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/tb_AddSub4b.v
+Z36 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/tb_AddSub4b.v
+L0 1
+R7
+r1
+!s85 0
+31
+!s108 1727694437.173000
+!s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/tb_AddSub4b.v|
+Z37 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/02_sub/verilog/tb_AddSub4b.v|
+!s101 -O0
+R8
+Z38 ntb_@add@sub4b

@@ -1,0 +1,20 @@
+# Compile of Add4b.v was successful.
+# Compile of Add16b.v was successful.
+# Compile of FA.v was successful.
+# Compile of HA.v was successful.
+# Compile of tb_Add16b.v was successful.
+# 5 compiles, 0 failed with no errors. 
+vsim -gui work.tb_Add16b
+# vsim -gui work.tb_Add16b 
+# Loading work.tb_Add16b
+# Loading work.Add16b
+# Loading work.Add4b
+# Loading work.FA
+# Loading work.HA
+add wave -position insertpoint  \
+sim:/tb_Add16b/Add_i_A \
+sim:/tb_Add16b/Add_i_B \
+sim:/tb_Add16b/Add_o_C \
+sim:/tb_Add16b/Add_o_S
+run
+# Break in Module tb_Add16b at C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/tb_Add16b.v line 15

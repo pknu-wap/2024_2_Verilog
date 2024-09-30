@@ -1,0 +1,105 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\jihoj\GitHub\2024_2_Verilog\01_task\01_basic\verilog
+vAdd16b
+Z1 !s100 GCfa>56L_R5N2QbkHn8?Q1
+Z2 IdC4aJ>cz`XH3FeHl`;Hek2
+Z3 VzE=>C3cVOSFDKiXCLkbiZ3
+Z4 dC:\Users\jihoj\GitHub\2024_2_Verilog\01_task\03_add_16_bit\verilog
+Z5 w1727703145
+Z6 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add16b.v
+Z7 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add16b.v
+L0 1
+Z8 OV;L;10.1d;51
+r1
+31
+Z9 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add16b.v|
+Z10 o-work work -O0
+Z11 n@add16b
+Z12 !s108 1727707156.463000
+Z13 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add16b.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vAdd4b
+Z14 !s100 EKd]_SXlenNbY69geU=eU3
+Z15 Ik5M9UCO2PEe1;NGK_^VQI2
+Z16 V7PAoPBZbAUd7_f>72^Qn@1
+R4
+Z17 w1727701272
+Z18 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add4b.v
+Z19 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add4b.v
+L0 1
+R8
+r1
+31
+Z20 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add4b.v|
+R10
+Z21 n@add4b
+Z22 !s108 1727707156.420000
+Z23 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/Add4b.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vFA
+Z24 !s100 8iYAmnA4U>9lF_QSb]G[70
+Z25 IDS9@lh`oFBE834jme`jRR0
+Z26 VniPLCU^5_T^<_hC<[5JBJ1
+R4
+Z27 w1727679561
+Z28 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/FA.v
+Z29 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/FA.v
+L0 1
+R8
+r1
+31
+Z30 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/FA.v|
+R10
+n@f@a
+Z31 !s108 1727707156.510000
+Z32 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/FA.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vHA
+Z33 !s100 <:FRkDnlWnTgQ9:zzZ03A1
+Z34 I6ZD<CXzD`:YVAdQO`I>gi0
+Z35 V=XD792mbkDQeT]MRmcJ2i2
+R4
+Z36 w1727679563
+Z37 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/HA.v
+Z38 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/HA.v
+L0 1
+R8
+r1
+31
+Z39 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/HA.v|
+R10
+n@h@a
+!i10b 1
+!s85 0
+Z40 !s108 1727707156.556000
+Z41 !s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/HA.v|
+!s101 -O0
+vtb_Add16b
+!i10b 1
+Z42 !s100 W75@O8;L@RL14MbafOc5Z1
+Z43 I9z3HNb4zklROcfo5lVoXD0
+Z44 V:H<flb=H:]]IzN48Bn4S@1
+R4
+w1727703038
+Z45 8C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/tb_Add16b.v
+Z46 FC:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/tb_Add16b.v
+L0 1
+R8
+r1
+!s85 0
+31
+!s108 1727707156.611000
+!s107 C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/tb_Add16b.v|
+Z47 !s90 -reportprogress|300|-work|work|C:/Users/jihoj/GitHub/2024_2_Verilog/01_task/03_add_16_bit/verilog/tb_Add16b.v|
+!s101 -O0
+R10
+Z48 ntb_@add16b
