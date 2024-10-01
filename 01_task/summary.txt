@@ -1,0 +1,360 @@
+1. 조합논리회로 pdf 파일의 p.12 ~ 15 까지 코드 작성해서 PR 올려주세요!
+
+1.1. HA.v
+	- 01_task\01_basic\verilog\HA.v
+
+1.2. FA.v
+	- 01_task\01_basic\verilog\FA.v
+
+1.3. Add4b.v
+	- 01_task\01_basic\verilog\Add4b.v
+
+1.4. tb_Add4b.v
+	- 01_task\01_basic\verilog\tb_Add4b.v
+
+2. 시뮬레이션 돌리고 해당 시뮬레이션을 캡쳐한 뒤 파형을 분석해서 PR에 올려주세요!
+	- 01_task\01_basic\01_wave_image.png
+	- 분석
+		- 0ps
+			- input
+				- Add_i_A: 4'b1010
+				- Add_i_B: 4'b1100
+			- output
+				- Add_o_S: 4'b0110
+				- Add_o_C: 1'b1
+		- 10ps
+			- input
+				- Add_i_A: 4'b0101
+				- Add_i_B: 4'd0111
+			- output
+				- Add_o_S: 4'b1100
+				- Add_o_C: 1'b0
+		- 20ps
+			- input
+				- Add_i_A: 4'd1001
+				- Add_i_B: 4'd1000
+			- output
+				- Add_o_S: 4'b0001
+				- Add_o_C: 1'b1
+
+2.1. Add4b.v 모듈의 구조도 이미지 (어떤 모듈들을 포함하고있는지)
+	- 01_task\01_basic\02_struct_image.png
+	- 01_task\01_basic\03_inner_struct_image.png
+
+2.2. 테스트 벤치의 파형을 보고 왜 이 타이밍에 이 값이 나왔는지 분석
+	- tb_Add4b
+		- 0ps
+			- input
+				- Add_i_A: 4'b1010
+				- Add_i_B: 4'b1100
+			- output
+				- Add_o_S: 4'b0110
+				- Add_o_C: 1'b1
+			- 분석
+				- [0:0] i_A + i_B => o_S + o_C
+					- [0]: 1'b0 + 1'b0 => 1'b0 + 1'b0
+				- [3:1] i_A + i_B + carry => o_S + o_C
+					- [1]: 1'b1 + 1'b0 + 1'b0 => 1'b1 + 1'b0
+					- [2]: 1'b0 + 1'b1 + 1'b0 => 1'b1 + 1'b0
+					- [3]: 1'b1 + 1'b1 + 1'b0 => 1'b0 + 1'b1
+		- 10ps
+			- input
+				- Add_i_A: 4'b0101
+				- Add_i_B: 4'd0111
+			- output
+				- Add_o_S: 4'b1100
+				- Add_o_C: 1'b0
+			- 분석
+				- [0:0] i_A + i_B => o_S + o_C
+					- [0]: 1'b1 + 1'b1 => 1'b0 + 1'b1
+				- [3:1] i_A + i_B + carry => o_S + o_C
+					- [1]: 1'b0 + 1'b1 + 1'b1 => 1'b0 + 1'b1
+					- [2]: 1'b1 + 1'b1 + 1'b1 => 1'b1 + 1'b1
+					- [3]: 1'b0 + 1'b0 + 1'b1 => 1'b1 + 1'b0
+		- 20ps
+			- input
+				- Add_i_A: 4'd1001
+				- Add_i_B: 4'd1000
+			- output
+				- Add_o_S: 4'b0001
+				- Add_o_C: 1'b1
+			- 분석
+				- [0:0] i_A + i_B => o_S + o_C
+					- [0]: 1'b1 + 1'b0 + 1'b0 => 1'b1 + 1'b0
+				- [3:1] i_A + i_B + carry => o_S + o_C
+					- [1]: 1'b0 + 1'b0 + 1'b0 => 1'b0 + 1'b0
+					- [2]: 1'b0 + 1'b0 + 1'b0 => 1'b0 + 1'b0
+					- [3]: 1'b1 + 1'b1 + 1'b0 => 1'b0 + 1'b1
+
+2.3. 위 내용을 토대로 Add4b.v 는 어떤 값을 입력 받아서 어떤 값을 출력하는 모델인지 명세 작성
+	- Add4b
+		- input
+			- i_A
+				- 4-bit
+				- 덧셈할 첫 번째 피연산자
+			- i_B
+				- 4-bit
+				- 덧셈할 두 번째 피연산자
+		- output
+			- o_S
+				- 4-bit
+				- i_A와 i_B를 덧셈한 결과
+			- o_C
+				- 1-bit
+				- o_S가 4'b1111을 초과하면 1, 그렇지 않으면 0
+		- inner
+			- HA
+				- input
+					- i_A
+						- 1-bit
+						- 첫 번째 입력의 n 번째 비트
+					- i_B
+						- 1-bit
+						- 두 번째 입력의 n 번째 비트
+				- output
+					- o_S
+						- 1-bit
+						- i_A ^ i_B
+					- o_C
+						- 1-bit
+						- i_A & i_B
+
+3. pdf 파일 p.20에 AddSub4b.v 를 작성하고 테스트 벤치 파일을 만들어서 Add4b.v와 어떤 부분이 다른지 분석해서 올려주세요!
+
+3.1. AddSub4b.v
+	- 01_task\02_sub\verilog\AddSub4b.v
+
+3.2. tb_AddSub4b.v
+	- 01_task\02_sub\verilog\tb_AddSub4b.v
+
+3.3. 테스트 벤치 분석 및 모델 명세
+	- 분석
+		- tb_Add4b
+			- 0ps
+				- input
+					- AddSub_i_A: 4'b0100
+					- AddSub_i_B: 4'b0011
+					- AddSub_i_fSub: 1'b0
+				- output
+					- AddSub_o_S: 4'b0111
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+						- [0]: 1'b0 + 1'b1 + 1'b0 => 1'b1 + 1'b0
+					- [3:1] i_A + i_B + carry => o_S + o_C
+						- [1]: 1'b0 + 1'b1 + 1'b0 => 1'b1 + 1'b0
+						- [2]: 1'b1 + 1'b0 + 1'b0 => 1'b1 + 1'b0
+						- [3]: 1'b0 + 1'b0 + 1'b0 => 1'b0 + 1'b0
+			- 10ps
+				- input
+					- AddSub_i_A: 4'b0111
+					- AddSub_i_B: 4'b0010
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 4'b0101
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+						- [0]: 1'b1 + 1'b1 + 1'b1 => 1'b1 + 1'b1
+					- [3:1] i_A + ~i_B + carry => o_S + o_C
+						- [1]: 1'b1 + 1'b0 + 1'b1 => 1'b0 + 1'b1
+						- [2]: 1'b1 + 1'b1 + 1'b1 => 1'b1 + 1'b1
+						- [3]: 1'b0 + 1'b1 + 1'b1 => 1'b0 + 1'b1
+			- 20ps
+				- input
+					- AddSub_i_A: 4'b1111
+					- AddSub_i_B: 4'b0001
+					- AddSub_i_fSub: 1'b0
+				- output
+					- AddSub_o_S: 4'b0000
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+						- [0]: 1'b1 + 1'b1 + 1'b0 => 1'b0 + 1'b1
+					- [3:1] i_A + i_B + carry => o_S + o_C
+						- [1]: 1'b1 + 1'b0 + 1'b1 => 1'b0 + 1'b1
+						- [2]: 1'b1 + 1'b0 + 1'b1 => 1'b1 + 1'b1
+						- [3]: 1'b1 + 1'b0 + 1'b1 => 1'b0 + 1'b1
+			- 30ps
+				- input
+					- AddSub_i_A: 4'b0101
+					- AddSub_i_B: 4'b1010
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 4'b1011
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+						- [0]: 1'b1 + 1'b1 + 1'b1 => 1'b1 + 1'b1
+					- [3:1] i_A + ~i_B + carry => o_S + o_C
+						- [1]: 1'b0 + 1'b0 + 1'b1 => 1'b1 + 1'b0
+						- [2]: 1'b1 + 1'b1 + 1'b0 => 1'b0 + 1'b1
+						- [3]: 1'b0 + 1'b0 + 1'b1 => 1'b1 + 1'b0
+	- 명세
+		- Add4b
+			- input
+				- i_A
+					- 4-bit
+					- 연산할 첫 번째 피연산자
+				- i_B
+					- 4-bit
+					- 연산할 두 번째 피연산자
+				- i_fSub
+					- 1-bit
+					- 0이면 덧셈 모드, 1이면 뺄셈 모드
+			- output
+				- o_S
+					- 4-bit
+					- i_A와 i_B를 연산한 결과
+				- o_C
+					- 1-bit
+					- o_S가 4'b1111을 초과하면 1, 그렇지 않으면 0
+			- inner
+				- HA
+					- input
+						- i_A
+							- 1-bit
+							- 첫 번째 입력의 n 번째 비트
+						- i_B
+							- 1-bit
+							- 두 번째 입력의 n 번째 비트
+					- output
+						- o_S
+							- 1-bit
+							- i_A ^ i_B
+						- o_C
+							- 1-bit
+							- i_A & i_B
+
+4. 지금 만든 모듈은 4bit 단위 연산을 지원하고 있습니다. 본인의 방식대로 4bit 연산을 16bit 연산으로 만든 뒤, 테스트 벤치를 돌려 분석해서 올려주세요!
+
+4.1. Add16b.v or AddSub16b.v
+	- 01_task\03_add_16_bit\verilog\Add16b.v
+	- 01_task\04_addsub_16_bit\verilog\AddSub16b.v
+
+4.2. tb_Add16b.v or tb_AddSub16b.v
+	- 01_task\03_add_16_bit\verilog\tb_Add16b.v
+	- 01_task\04_addsub_16_bit\verilog\tb_AddSub16b.v
+
+4.3. 테스트 벤치 분석 및 모델 명세
+	- 분석
+		- tb_Add16b
+			- 0ps
+				- input
+					- AddSub_i_A: 16'b1111_0111_1111_1000
+					- AddSub_i_B: 16'b0111_1001_0110_0001
+				- output
+					- AddSub_o_S: 16'b0111_0001_0101_1001
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+					- [15:1] i_A + i_B + carry => o_S + o_C
+			- 10ps
+				- input
+					- AddSub_i_A: 16'b1110_0101_1110_0001
+					- AddSub_i_B: 16'b0111_0011_1010_0011
+				- output
+					- AddSub_o_S: 16'b0101_1001_1000_0100
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+					- [15:1] i_A + i_B + carry => o_S + o_C
+			- 20ps
+				- input
+					- AddSub_i_A: 16'b0000_0101_0110_1110
+					- AddSub_i_B: 16'b1110_1010_0000_0001
+				- output
+					- AddSub_o_S: 16'b1110_1111_0110_1111
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+					- [15:1] i_A + i_B + carry => o_S + o_C
+			- 30ps
+				- input
+					- AddSub_i_A: 16'b0011_1111_0001_1011
+					- AddSub_i_B: 16'b0100_0110_1110_1010
+				- output
+					- AddSub_o_S: 16'b1000_0110_0000_0101
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + i_B => o_S + o_C
+					- [15:1] i_A + i_B + carry => o_S + o_C
+		- tb_AddSub16b
+			- 0ps
+				- input
+					- AddSub_i_A: 16'b1111_0111_1111_1000
+					- AddSub_i_B: 16'b0111_1001_0110_0001
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 16'b0111_1110_1001_0111
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+					- [15:1] i_A + ~i_B + carry => o_S + o_C
+			- 10ps
+				- input
+					- AddSub_i_A: 16'b1110_0101_1110_0001
+					- AddSub_i_B: 16'b0111_0011_1010_0011
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 16'b0111_0010_0011_1110
+					- AddSub_o_C: 1'b1
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+					- [15:1] i_A + ~i_B + carry => o_S + o_C
+			- 20ps
+				- input
+					- AddSub_i_A: 16'b0000_0101_0110_1110
+					- AddSub_i_B: 16'b1110_1010_0000_0001
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 16'b0001_1011_0110_1101
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+					- [15:1] i_A + ~i_B + carry => o_S + o_C
+			- 30ps
+				- input
+					- AddSub_i_A: 16'b0011_1111_0001_1011
+					- AddSub_i_B: 16'b0100_0110_1110_1010
+					- AddSub_i_fSub: 1'b1
+				- output
+					- AddSub_o_S: 16'b1111_1000_0011_0001
+					- AddSub_o_C: 1'b0
+				- 분석
+					- [0:0] i_A + ~i_B + 1'b1 => o_S + o_C
+					- [15:1] i_A + ~i_B + carry => o_S + o_C
+	- 명세
+		- Add16b
+			- input
+				- i_A
+					- 16-bit
+					- 덧셈할 첫 번째 피연산자
+				- i_B
+					- 16-bit
+					- 덧셈할 두 번째 피연산자
+			- output
+				- o_S
+					- 16-bit
+					- i_A와 i_B를 덧셈한 결과
+				- o_C
+					- 1-bit
+					- o_S가 16'b1111_1111_1111_1111을 초과하면 1, 그렇지 않으면 0
+		- AddSub16b
+			- input
+				- i_A
+					- 16-bit
+					- 연산할 첫 번째 피연산자
+				- i_B
+					- 16-bit
+					- 연산할 두 번째 피연산자
+				- i_fSub
+					- 1-bit
+					- 0이면 덧셈 모드, 1이면 뺄셈 모드
+			- output
+				- o_S
+					- 16-bit
+					- i_A와 i_B를 연산한 결과
+				- o_C
+					- 1-bit
+					- o_S가 16'b1111_1111_1111_1111을 초과하면 1, 그렇지 않으면 0
