@@ -1,7 +1,6 @@
 module Counter(i_Clk, i_Rst, i_Push, o_LED, o_FND);
 
-    input i_Clk; // 50MHz
-    input i_Rst;
+    input i_Clk, i_Rst;
     input [1:0] i_Push;
     output [3:0] o_LED;
     output [6:0] o_FND;

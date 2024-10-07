@@ -6,9 +6,7 @@ module tb_Cnt();
     wire [11:0] Cnt_o_LED;
     wire [20:0] Cnt_o_FND;
 
-    wire Carry;
-
-    Master_Counter U0(Clk, Rst, Push, Cnt_o_LED, Cnt_o_FND, Carry);
+    Master_Counter U0(Clk, Rst, Push, Cnt_o_LED, Cnt_o_FND);
 
     always #10 Clk = ~Clk;
 
