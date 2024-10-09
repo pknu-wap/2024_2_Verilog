@@ -1,8 +1,9 @@
-module Counter(i_Clk, i_Rst, i_Push, o_LED, o_FND);
+module Counter(i_Clk, i_Rst, i_Push, o_LED1,o_LED2, o_FND);
     input i_Clk; // 50MHz
     input i_Rst;
     input [1:0] i_Push;
-    output wire [3:0] o_LED;
+    output wire [3:0] o_LED1;
+    output wire [3:0] o_LED2;
     output wire [6:0] o_FND;
 
     reg [3:0] c_Cnt, n_Cnt;
@@ -23,13 +24,14 @@ module Counter(i_Clk, i_Rst, i_Push, o_LED, o_FND);
         end
 
     assign {fUp, fDn} = ~i_Push & c_UpDn;
-    assign o_LED = c_Cnt;
+    assign o_LED1 = c_Cnt >= 10 ? c_Cnt / 10 : 0;
+    assign o_LED2 = c_Cnt >= 10 ? c_Cnt % 10 : c_Cnt;
 
     always@*
         begin
             n_UpDn = i_Push;
-            n_Cnt = fUp ? c_Cnt + 1 : 
-                    fDn ? c_Cnt - 1 : c_Cnt;
+            n_Cnt = fUp ? c_Cnt * 2 :
+                    fDn ? c_Cnt / 2 : c_Cnt + 2;
         end
 
 endmodule
