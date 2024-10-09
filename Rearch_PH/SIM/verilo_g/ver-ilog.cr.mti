@@ -1,0 +1,27 @@
+C:/Rearch/SIM/verilo_g/Add4b.v {1 {vlog -work work C:/Rearch/SIM/verilo_g/Add4b.v
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module Add4b
+
+Top level modules:
+	Add4b
+
+} {} {}} C:/Rearch/SIM/verilo_g/FA.v {1 {vlog -work work C:/Rearch/SIM/verilo_g/FA.v
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module HA
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Rearch/SIM/verilo_g/tb_Add4b.v {0 {vlog -work work C:/Rearch/SIM/verilo_g/tb_Add4b.v
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module tb_Add4b
+** Error: C:/Rearch/SIM/verilo_g/tb_Add4b.v(19): near "endmodule": syntax error, unexpected endmodule
+
+} {4.0 5.0} {}} C:/Rearch/SIM/verilo_g/HA.v {1 {vlog -work work C:/Rearch/SIM/verilo_g/HA.v
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module HA
+
+Top level modules:
+	HA
+
+} {} {}}

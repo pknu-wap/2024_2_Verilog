@@ -1,0 +1,65 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\altera\13.1
+vAdd4b
+Z1 !s100 VcaHzB9:Q6dU=ha01Vgko0
+Z2 Iddc6Ce1;mnmO@iIoR[c;[1
+Z3 V`:kDQcn0j02>T^3HmbcgG3
+Z4 dC:\Rearch\SIM\verilo_g
+Z5 w1727702945
+Z6 8C:/Rearch/SIM/verilo_g/Add4b.v
+Z7 FC:/Rearch/SIM/verilo_g/Add4b.v
+L0 1
+Z8 OV;L;10.1d;51
+r1
+31
+Z9 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/verilo_g/Add4b.v|
+Z10 o-work work -O0
+Z11 n@add4b
+!i10b 1
+!s85 0
+Z12 !s108 1727707484.583000
+Z13 !s107 C:/Rearch/SIM/verilo_g/Add4b.v|
+!s101 -O0
+vHA
+Z14 I`?`650LJT5OzdC@`hQjM@3
+Z15 V[@P1>@Z;hIFZ^VP^BenW91
+R4
+Z16 w1727702261
+Z17 8C:/Rearch/SIM/verilo_g/FA.v
+Z18 FC:/Rearch/SIM/verilo_g/FA.v
+L0 1
+R8
+r1
+31
+R10
+n@h@a
+Z19 !s100 zcPOfVX>:Z^a<FHZ5MDEi0
+Z20 !s108 1727707484.426000
+Z21 !s107 C:/Rearch/SIM/verilo_g/FA.v|
+Z22 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/verilo_g/FA.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vtb_Add4b
+!i10b 1
+Z23 !s100 OECz;zNOZ4fUM58EKSz1]3
+Z24 IlLD_QEL540ocTN8[S[FR;3
+Z25 VUKSgK=lmhfN@Ue0T7S:721
+R4
+Z26 w1727707433
+Z27 8C:/Rearch/SIM/verilo_g/tb_Add4b.v
+Z28 FC:/Rearch/SIM/verilo_g/tb_Add4b.v
+L0 1
+R8
+r1
+!s85 0
+31
+!s108 1727707484.749000
+!s107 C:/Rearch/SIM/verilo_g/tb_Add4b.v|
+Z29 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/verilo_g/tb_Add4b.v|
+!s101 -O0
+R10
+Z30 ntb_@add4b
