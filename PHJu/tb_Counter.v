@@ -1,4 +1,4 @@
-`timescale 1 ns / 1ns
+timescale 1 ns / 1ns
 module tb_Cnt();
     reg Clk;
     reg Rst;
