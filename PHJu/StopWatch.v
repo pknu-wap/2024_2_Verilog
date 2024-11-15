@@ -16,8 +16,8 @@ module StopWatch(i_Clk, i_Rst, i_fRecord,i_fStart, i_fStop, o_Sec0, o_Sec1, o_Se
     reg c_fRecord, n_fRecord;
 
     wire fLstClk;
-    wire fLstSec0, fLstSec1, fLstSec2,fLstSec3, fLstSec4, fLstSec5;
-    wire fIncSec0, fIncSec1, fIncSec2,fIncSec3, fIncSec4, fIncSec5;
+    wire fLstSec0, fLstSec1, fLstSec2;
+    wire fIncSec0, fIncSec1, fIncSec2;
     wire fStart, fStop, fRecord;
 
     parameter LST_CLK = 100_000_000/20 - 1;
@@ -99,7 +99,6 @@ module StopWatch(i_Clk, i_Rst, i_fRecord,i_fStart, i_fStop, o_Sec0, o_Sec1, o_Se
                 n_Sec0 = fIncSec0 ? (fLstSec0 ? 0 : c_Sec0 + 1) : c_Sec0;
                 n_Sec1 = fIncSec1 ? (fLstSec1 ? 0 : c_Sec1 + 1) : c_Sec1;
                 n_Sec2 = fIncSec2 ? (fLstSec2 ? 0 : c_Sec2 + 1) : c_Sec2;
-                if(fStop) n_State = PAUSE;
                 if(fRecord) begin
                     n_Sec3 = c_Sec0;
                     n_Sec4 = c_Sec1;
@@ -109,9 +108,6 @@ module StopWatch(i_Clk, i_Rst, i_fRecord,i_fStart, i_fStop, o_Sec0, o_Sec1, o_Se
                 else if(fStop) n_State = IDLE;  
             end
             PAUSE: begin
-                n_Sec3 = 0;
-                n_Sec4 = 0;
-                n_Sec5 = 0;
                 if(fStart) n_State = WORK;
                 else if(fStop) n_State = IDLE;
             end

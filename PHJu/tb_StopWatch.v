@@ -21,13 +21,13 @@ module tb_StopWatch;
         fRecord =1;
         
         @(negedge Clk) Rst = 1;
-        #100 fStart = 0; #20 fStart = 1;
+        #100_000_000 fStart = 0; #200_000 fStart = 1;
 
-        #500 fRecord = 0; #20 fRecord = 1;
+        #500_000_000 fRecord = 0; #200_000 fRecord = 1;
 
-        #1000 fStart = 0; #20 fStart = 1;
+        #100_000 fStart = 0; #200_000 fStart = 1;
 
-        #500 fStop = 0; #20 fStop = 1;
+        #500_000 fStop = 0; #200_000 fStop = 1;
         $stop;
     end
 endmodule
