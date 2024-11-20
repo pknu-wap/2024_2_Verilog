@@ -1,8 +1,7 @@
-module StopWatch(i_Clk, i_Rst, i_Rec, i_fStart, i_fStop, i_fRecord, o_Sec0, o_Sec1, o_Sec2, o_Sec3, o_Sec4, o_Sec5);
-    input i_Clk, i_Rst, i_Rec;
+module StopWatch(i_Clk, i_Rst, i_fRecord,i_fStart, i_fStop, o_Sec0, o_Sec1, o_Sec2, o_Sec3, o_Sec4, o_Sec5);
+    input i_Clk, i_Rst;
     input i_fStart, i_fStop, i_fRecord;
     output wire [6:0] o_Sec0, o_Sec1, o_Sec2, o_Sec3, o_Sec4, o_Sec5;
-
 
     reg [1:0] c_State, n_State;
     reg [3:0] c_Sec0, n_Sec0;
@@ -27,12 +26,11 @@ module StopWatch(i_Clk, i_Rst, i_Rec, i_fStart, i_fStop, i_fRecord, o_Sec0, o_Se
     FND FND0(c_Sec0, o_Sec0);
     FND FND1(c_Sec1, o_Sec1);
     FND FND2(c_Sec2, o_Sec2);
-    
     FND FND3(c_Sec3, o_Sec3);
     FND FND4(c_Sec4, o_Sec4);
     FND FND5(c_Sec5, o_Sec5);
 
-    always@(posedge i_Clk or negedge i_Rst or negedge i_Rec)
+    always@(posedge i_Clk or negedge i_Rst)
         if(!i_Rst) begin
             c_State = IDLE;
             c_ClkCnt = 0;
@@ -44,12 +42,6 @@ module StopWatch(i_Clk, i_Rst, i_Rec, i_fStart, i_fStop, i_fRecord, o_Sec0, o_Se
             c_Sec5 = 0;
             c_fStart = 1;
             c_fStop = 1;
-            c_fRecord = 1;
-        end else if (!i_Rec) begin
-            c_State = RECORD;
-            c_Sec3 = c_Sec0;
-            c_Sec4 = c_Sec1;
-            c_Sec5 = c_Sec2;
         end else begin
             c_State = n_State;
             c_ClkCnt = n_ClkCnt;
@@ -59,20 +51,20 @@ module StopWatch(i_Clk, i_Rst, i_Rec, i_fStart, i_fStop, i_fRecord, o_Sec0, o_Se
             c_Sec3 = n_Sec3;
             c_Sec4 = n_Sec4;
             c_Sec5 = n_Sec5;
-            c_fStart = n_fStart;
-            c_fStop = n_fStop;
-            c_fRecord = n_fRecord;
+            c_fStart = i_fStart;
+            c_fStop = i_fStop;
+            c_fRecord = i_fRecord;
         end
 
     assign fStart = !i_fStart && c_fStart,
            fStop = !i_fStop && c_fStop,
            fRecord = !i_fRecord && c_fRecord;
-           
+
     assign fLstClk = c_ClkCnt == LST_CLK,
            fLstSec0 = c_Sec0 == 9,
            fLstSec1 = c_Sec1 == 9,
            fLstSec2 = c_Sec2 == 9;
-    
+
     assign fIncSec0 = fLstClk,
            fIncSec1 = fIncSec0 && fLstSec0,
            fIncSec2 = fIncSec1 && fLstSec1;
@@ -107,24 +99,18 @@ module StopWatch(i_Clk, i_Rst, i_Rec, i_fStart, i_fStop, i_fRecord, o_Sec0, o_Se
                 n_Sec0 = fIncSec0 ? (fLstSec0 ? 0 : c_Sec0 + 1) : c_Sec0;
                 n_Sec1 = fIncSec1 ? (fLstSec1 ? 0 : c_Sec1 + 1) : c_Sec1;
                 n_Sec2 = fIncSec2 ? (fLstSec2 ? 0 : c_Sec2 + 1) : c_Sec2;
-                if(fStop) n_State = IDLE;
-                else if(fRecord) begin
-                  n_Sec3=c_Sec0;
-                  n_Sec4=c_Sec1;
-                  n_Sec5=c_Sec2;
-                  n_State=PAUSE;
-                end
-                else if(fStart) n_State = PAUSE;
+                if(fRecord) begin
+                    n_Sec3 = c_Sec0;
+                    n_Sec4 = c_Sec1;
+                    n_Sec5 = c_Sec2;
+                    end
+                if(fStart) n_State = PAUSE;
+                else if(fStop) n_State = IDLE;  
             end
-            RECORD: begin
-                n_Sec3 = n_Sec0;
-                n_Sec4 = n_Sec1;
-                n_Sec5 = n_Sec2;
-                n_State = PAUSE;
+            PAUSE: begin
+                if(fStart) n_State = WORK;
+                else if(fStop) n_State = IDLE;
             end
-            PAUSE:
-                if(fRecord) n_State = IDLE;
-                else if(fStart) n_State = WORK;
         endcase
     end
 endmodule
