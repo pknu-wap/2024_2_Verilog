@@ -1,3 +1,6 @@
+// State : 3'b000 기본화면(검정), 3'b001 적, 3'b010 적 총알, 3'b011 플레이어, 3'b100 플레이어 총알
+// 순서 : 적 총알 -> 적 -> 플레이어 총알 -> 플레이어
+
 module GALAGA_1(
   input [9:0] n_PixelPos_x,
   input [9:0] n_PixelPos_y,
