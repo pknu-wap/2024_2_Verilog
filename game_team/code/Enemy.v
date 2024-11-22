@@ -3,27 +3,27 @@ module Enemy (
     enemyState, stageState, enemyPosition
 );
 
-    parameter MAX_ENEMY	= 4'b1111;	// 4'd15
+    parameter MAX_ENEMY = 4'b1111;    // 4'd15
     
-    parameter PHASE_1	= 2'b00;
-    parameter PHASE_2	= 2'b01;
-    parameter PHASE_3	= 2'b10;
-    parameter PHASE_4	= 2'b11;
+    parameter PHASE_1   = 2'b00;
+    parameter PHASE_2   = 2'b01;
+    parameter PHASE_3   = 2'b10;
+    parameter PHASE_4   = 2'b11;
 
-    parameter CENTER_X	= 302;
-    parameter CENTER_Y	= 108;
-    parameter GAP_X		= 72;
-    parameter GAP_Y		= 60;
+    parameter CENTER_X  = 302;
+    parameter CENTER_Y  = 108;
+    parameter GAP_X     = 72;
+    parameter GAP_Y     = 60;
 
     integer i, j;
 
-    input	[MAX_ENEMY-1:0]	enemyState;
-    input	[8:0]			stageState;
+    input   [MAX_ENEMY-1:0] enemyState;
+    input   [8:0]           stageState;
 
-    output	[18:0]			enemyPosition [MAX_ENEMY-1:0];
+    output  [18:0]          enemyPosition [MAX_ENEMY-1:0];
 
-    wire	[1:0]			phaseState;
-    wire	[6:0]			phaseTick;
+    wire    [1:0]           phaseState;
+    wire    [6:0]           phaseTick;
 
     assign {phaseState, phaseTick} = stageState;
 
