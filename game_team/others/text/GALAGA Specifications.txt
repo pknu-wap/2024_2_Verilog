@@ -1,0 +1,228 @@
+GALAGA Specifications
+
+- model
+	- 게임 모듈
+	- parameter
+	- entityQuantity
+		- 개체가 필드에 존재할 수 있는 최대 수량
+		- MAX_ENEMY
+			- 15 (4'b1111)
+			- 적의 최대량
+		- MAX_ENEMY_BULLET
+			- 31 (5'b11111)
+			- 적 탄의 최대량
+		- MAX_PLAYER_BULLET
+			- 15 (4'b1111)
+			- 플레이어 탄의 최대량
+	- entityAttribute
+		- 개체의 속성
+		- ENEMY_WIDTH
+			- 36px (6'b100100)
+			- 적의 너비
+		- ENEMY_HEIGHT
+			- 24px (5'b11000)
+			- 적의 높이
+		- ENEMY_BULLET_WIDTH
+			- 4px (3'b100)
+			- 적 탄의 너비
+		- ENEMY_BULLET_HEIGHT
+			- 16px (5'b10000)
+			- 적 탄의 높이
+		- PLAYER_WIDTH
+			- 24px (5'b11000)
+			- 플레이어의 너비
+		- PLAYER_HEIGHT
+			- 36px (6'b100100)
+			- 플레이어의의 높이
+		- PLAYER_BULLET_WIDTH
+			- 4px (3'b100)
+			- 플레이어 탄의 너비
+		- PLAYER_BULLET_HEIGHT
+			- 16px (5'b10000)
+			- 플레이어 탄의 높이
+		- MAX_PLAYER_SHOOT_FREQUENCY
+			- 12(4’b1100)
+			- 플레이어 탄이 발사되는 최대 빈도
+			- 최대 1회/12tick
+	- gameState
+		- 3-bit
+		- 게임의 상태
+		- GAME_IDLE
+			- 3'b000
+			- 시작되지 않음
+		- GAME_PLAYING
+			- 3'b001
+			- 플레이 중
+		- GAME_VICTORY
+			- 3'b010
+			- 승리
+		- GAME_DEFEAT
+			- 3'b011
+			- 패배
+		- GAME_ERROR
+			- 3'b1XX
+			- 오류
+	- systemParam
+		- 시스템 상수
+		- CLOCK_PER_TICK: 1틱 당 클락 수
+			- 800K-clk (800,000)
+	- input
+		- clock
+			- 1-bit
+			- clock 신호
+		- tick
+			- 1-bit
+			- tick 신호
+				- 사용자의 연속된 입력을 고려하여 보정된 클락 신호
+		- playerMoveLeft
+			- 1-bit
+			- 사용자 버튼 입력 신호
+				- 플레이어를 왼쪽으로 이동
+		- playerMoveRight
+			- 1-bit
+			- 사용자 버튼 입력 신호
+				- 플레이어를 오른쪽으로 이동
+		- playerBulletShoot
+			- 1-bit
+			- 사용자 버튼 입력 신호
+				- 플레이어의 탄 발사
+		- gameStartStop
+			- 1-bit
+			- 사용자 버튼 입력 신호
+				- 게임 시작 또는 게임 종료
+	- output
+		- enemyState
+			- 15-bit
+				- MAX_ENEMY-bit
+			- 모든 적의 상태를 저장
+				- 0이면 비존재(소멸) 상태, 1이면 존재(생성) 상태
+		- enemyBulletState
+			- 31-bit
+				- MAX_ENEMY_BULLET-bit
+			- 모든 적 탄의 상태를 저장
+				- 0이면 비존재(소멸) 상태, 1이면 존재(생성) 상태
+		- playerState
+			- 1-bit
+			- 플레이어의 상태를 저장
+				- 0이면 비존재(소멸) 상태, 1이면 존재(생성) 상태
+		- playerBulletState
+			- 15-bit
+				- MAX_PLAYER_BULLET-bit
+			- 모든 플레이어 탄의 상태를 저장
+				- 0이면 비존재(소멸) 상태, 1이면 존재(생성) 상태
+		- enemyPosition
+			- 2차원 배열
+			- 285-bit
+				- 15 * 19-bit
+					- MAX_ENEMY * (roundup(log2(480 - ENEMY_WIDTH)) + roundup(log2(320 - ENEMY_HEIGHT))))-bit
+			- 모든 적의 좌표를 저장
+				- 좌상단 기준
+			- row
+				- enemyIndex
+					- 15-row
+						- MAX_ENEMY-row
+					- 특정 적에 접근
+			- column
+				- {enemyHorizontalPosition, enemyVerticalPosition}
+					- 적의 좌표
+						- 비존재(소멸) 상태면 19’b111_1111_1111_1111_1111
+					- enemyHorizontalPosition
+						- 10-bit
+							- roundup(log2(480 - ENEMY_WIDTH))
+						- 적의 가로 좌표
+					- enemyVerticalPosition
+						- 9-bit
+							- roundup(log2(320 - ENEMY_HEIGHT))
+						- 적의 세로 좌표
+		- enemyBulletPosition
+			- 2차원 배열
+			- 589-bit
+				- 31 * 19-bit
+					- MAX_ENEMY_BULLET * (roundup(log2(640 - ENEMY_WIDTH)) + roundup(log2(480 - ENEMY_HEIGHT))))-bit
+			- 적이 발사한 모든 탄의 좌표를 저장
+				- 좌상단 기준
+			- row
+				- enemyBulletIndex
+					- 30-row
+						- MAX_ENEMY_BULLET-row
+					- 특정 적 탄에 접근
+			- column
+				- {enemyBulletHorizontalPosition, enemyBulletVerticalPosition}
+					- 적 탄의 좌표
+						- 비존재(소멸) 상태면 19’b111_1111_1111_1111_1111
+					- enemyBulletHorizontalPosition
+						- 10-bit
+							- roundup(log2(640 - ENEMY_WIDTH))
+						- 적 탄의 가로 좌표
+					- enemyBulletVerticalPosition
+						- 9-bit
+							- roundup(log2(480 - ENEMY_HEIGHT)))
+						- 적 탄의 세로 좌표
+		- playerPosition
+			- 10-bit
+				- roundup(log2(640 - PLAYER_WIDTH))
+			- 플레이어의 가로 좌표
+				- 좌상단 기준
+				- 비존재(소멸) 상태면 10’b11_1111_1111
+		- playerBulletPosition
+			- 2차원 배열
+			- 285-bit
+				- 15 * 19-bit
+					- MAX_PLAYER_BULLET * (roundup(log2(640 - PLAYER_WIDTH)) + roundup(log2(480 - PLAYER_HEIGHT))))-bit
+			- 플레이어가 발사한 모든 탄의 좌표를 저장
+				- 좌상단 기준
+			- row
+				- playerBulletIndex
+					- 15-row
+						- MAX_PLAYER_BULLET-row
+					- 특정 플레이어 탄에 접근
+			- column
+				- {playerBulletHorizontalPosition, playerBulletVerticalPosition}
+					- 적 탄의 좌표
+						- 비존재(소멸) 상태면 19’b111_1111_1111_1111_1111
+					- playerBulletHorizontalPosition
+						- 10-bit
+							- roundup(log2(640 - PLAYER_WIDTH))
+						- 플레이어 탄의 가로 좌표
+					- playerBulletVerticalPosition
+						- 9-bit
+							- roundup(log2(480 - PLAYER_HEIGHT))
+						- 플레이어 탄의 세로 좌표
+		- gameState
+			- 3-bit
+			- 게임의 상태
+			- GAME_IDLE
+				- 3'b000
+				- 시작되지 않음
+			- GAME_PLAYING
+				- 3'b001
+				- 플레이 중
+			- GAME_VICTORY
+				- 3'b010
+				- 승리
+			- GAME_DEFEAT
+				- 3'b011
+				- 패배
+			- GAME_ERROR
+				- 3'b1XX
+				- 오류
+		- stageState
+			- 9-bit
+			- 게임 플레이 중일 때 스태이지의 상태
+			- {phaseState, phaseTick}
+				- phaseState
+					- 2-bit
+					- 스테이지의 현재 페이즈
+						- phase 1: 2'b00
+						- phase 2: 2'b01
+						- phase 3: 2'b10
+						- phase 4: 2'b11
+				- phaseTick
+					- 7-bit
+					- 페이즈의 현재 tick 값
+						- 페이즈가 바뀐 후부터 현재까지 누적된 tick 값
+		- score
+			- 14-bit
+			- 플레이어가 얻은 점수
+				- 게임을 클리어하기까지 걸린 시간
+					- 000.0 ~ 999.9 sec
