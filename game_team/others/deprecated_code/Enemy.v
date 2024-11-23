@@ -1,4 +1,7 @@
 // 입출력 핀 개수에 제한이 있을 수 있음
+
+// 적 쪼개기
+// 적 계산 알고리즘 개선
 module Enemy (
     enemyState, stageState, enemyPosition
 );
