@@ -1,0 +1,65 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Rearch\SIM\verilo_g
+vCounter
+Z1 !s100 LZkM[DdOj>;[^^6NWG[j<1
+Z2 ISaYFId4mO?a>7bPk@a:RZ0
+Z3 Vh1EIeUXX?F`BoShnFQiDD3
+Z4 dC:\Rearch\SIM\Counter
+Z5 w1728460283
+Z6 8C:/Rearch/SIM/Counter/Counter.v
+Z7 FC:/Rearch/SIM/Counter/Counter.v
+L0 1
+Z8 OV;L;10.1d;51
+r1
+31
+Z9 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/Counter/Counter.v|
+Z10 o-work work -O0
+Z11 n@counter
+Z12 !s108 1728460294.164000
+Z13 !s107 C:/Rearch/SIM/Counter/Counter.v|
+!i10b 1
+!s85 0
+!s101 -O0
+vFND
+Z14 IA@<BNW9SiLPBXN`=SR;gc3
+Z15 VjcDFn<7iPYXoD5lK5AM`52
+R4
+Z16 w1728460288
+Z17 8C:/Rearch/SIM/Counter/FND.v
+Z18 FC:/Rearch/SIM/Counter/FND.v
+L0 1
+R8
+r1
+31
+Z19 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/Counter/FND.v|
+R10
+Z20 n@f@n@d
+!i10b 1
+Z21 !s100 5B;50=zM3A6JPo]M5:YfI2
+!s85 0
+Z22 !s108 1728460294.302000
+Z23 !s107 C:/Rearch/SIM/Counter/FND.v|
+!s101 -O0
+vtb_Cnt
+!i10b 1
+Z24 !s100 CZTVSD0g5B4ISQK<RJAYo3
+Z25 I4V<]fgMR`18Y9S@D0;Pn90
+Z26 VVRb0biQHDUFDFE_ZX<NAm1
+R4
+Z27 w1727783254
+Z28 8C:/Rearch/SIM/Counter/tb_Counter.v
+Z29 FC:/Rearch/SIM/Counter/tb_Counter.v
+L0 2
+R8
+r1
+!s85 0
+31
+!s108 1728460294.517000
+!s107 C:/Rearch/SIM/Counter/tb_Counter.v|
+Z30 !s90 -reportprogress|300|-work|work|C:/Rearch/SIM/Counter/tb_Counter.v|
+!s101 -O0
+R10
+Z31 ntb_@cnt
