@@ -156,7 +156,7 @@ GALAGA Specifications
 						- 적 탄의 가로 좌표
 					- enemyBulletVerticalPosition
 						- 9-bit
-							- roundup(log2(480 - ENEMY_HEIGHT)))
+							- roundup(log2(480 - ENEMY_HEIGHT))
 						- 적 탄의 세로 좌표
 		- playerPosition
 			- 10-bit
