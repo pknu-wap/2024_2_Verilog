@@ -25,13 +25,13 @@ module Bullet_Gen_And_Move (
     reg [18:0]                  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
     reg [1:0]                   c_Phase,        n_Phase;
-    reg [6:0]                   c_StageState,   n_StageState;
+    reg [6:0]                   c_PhaseCnt,     n_PhaseCnt;
 
     integer i, j;
 
     wire fNextPhase;
 
-    assign fNextPhase = &c_StateState;
+    assign fNextPhase = &c_PhaseCnt;
 
 
     always @(posedge i_Clk, negedge i_Rst) begin
@@ -59,12 +59,10 @@ module Bullet_Gen_And_Move (
                 c_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
             end
 
-            c_StageState            = 9'b00_0000000;
+            c_Phase                 = 2'b00;
+            c_PhaseCnt              = 7'b000_0000;
 
         end else begin
-            c_fPlayerShoot          = n_fPlayerShoot;
-            c_fGameStartStop        = n_fGameStartStop;
-
             c_EnemyState            = n_EnemyState;
             c_EnemyBulletState      = n_EnemyBulletState;
             c_PlayerState           = n_PlayerState;
@@ -74,16 +72,25 @@ module Bullet_Gen_And_Move (
             c_EnemyBulletPosition   = n_EnemyBulletPosition;
             c_PlayerPosition        = n_PlayerPosition;
             c_PlayerBulletPosition  = n_PlayerBulletPosition;
-
-            c_StageState            = n_StageState;
+            c_Phase                 = n_Phase;
+            c_PhaseCnt              = n_PhaseCnt;
         end
     end
 
-
     always @* begin
-        n_Phase = fNextPhase ? c_Phase + 1 : c_Phase;
+        n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
+        n_PhaseCnt              = c_PhaseCnt + 1;
+        n_EnemyState            = c_EnemyState;
+        n_PlayerState           = c_PlayerState;
+        n_EnemyPosition         = c_EnemyPosition;
+        n_PlayerPosition        = c_PlayerPosition;
 
+
+        n_EnemyBulletState      = ;
+        n_EnemyBulletPosition   = c_EnemyBulletPosition;
         
+        n_PlayerBulletState     = ;
+        n_PlayerBulletPosition  = ;
 
 
         // 존재하는 적 탄을 이동
