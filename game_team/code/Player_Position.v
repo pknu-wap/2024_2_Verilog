@@ -1,33 +1,27 @@
-module Player_Position (i_Clk, i_Rst, i_btn_Left, i_btn_Right,
-                        Player_x,Player_y);
-
+module Player_Position (i_Clk, i_Rst,i_Btn_Left,i_Btn_Right,i_Player_Posion
+                        ,i_fTick, o_Player_Position);
+                        
     input i_Clk;
     input i_Rst;
-    input i_btn_Left;
-    input i_btn_Right;    
-    output reg [4:0] Player_x;
-    output reg [4:0] Player_y;
+    input i_Btn_Left;
+    input i_Btn_Right;
+    input [9:0] i_Player_Position;
+    input i_fTick;
+    output reg [9:0] o_PlayerPosition;
     
-    initial begin
-        Player_x = 0;
-        Player_y = 0;
-    end
-
-  
     always @(posedge i_Clk or posedge i_Rst) begin
-      
         if (i_Rst) begin
-            Player_x <= 0;
-            Player_y <= 0;
-            
-        end else begin
+            o_PlayerPosition <= 10'd0;         end else if (i_fTick) begin
           
-            if (i_btn_Left && Player_x > 0) begin
-                Player_x <= Player_x - 1; 
-                
-            end else if (i_btn_Right && Player_x < (240 - 24)) begin
-                Player_x <= Player_x + 1;
+            
+            if (i_Btn_Left && i_Player_Position > 10'd0) begin
+                o_PlayerPosition <= i_Player_Position - 10'd1;
+            end else if (i_Btn_Right && i_Player_Position < (10'd240 - 10'd24)) begin
+                o_PlayerPosition <= i_Player_Position + 10'd1;
+            end else begin
+                o_PlayerPosition <= i_Player_Position;            
             end
         end
     end
+
 endmodule
