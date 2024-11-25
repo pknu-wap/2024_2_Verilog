@@ -1,3 +1,5 @@
+// 수정 중
+// i_ => temp_ => o_
 module Bullet_Gen_And_Move 
     # (
         parameter MAX_ENEMY         = 4'd15, 
@@ -23,21 +25,28 @@ module Bullet_Gen_And_Move
 
     integer i, j;
 
-    reg [18:0] temp_EnemyBulletPosition;
-    reg [18:0] temp_PlayerBulletPosition;
+    reg [MAX_ENEMY_BULLET-1:0]  temp0_EnemyBulletState;
+    reg [MAX_PLAYER_BULLET-1:0] temp0_PlayerBulletState;
+    reg [18:0]                  temp0_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+    reg [18:0]                  temp0_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
     always @* begin
+        temp0_EnemyBulletState = i_EnemyBulletState;
+        temp0_PlayerBulletState = i_PlayerBulletState;
+        temp0_EnemyBulletPosition = i_EnemyBulletPosition;
+        temp0_PlayerBulletPosition = i_PlayerBulletPosition;
+
         // 존재하는 적 탄을 이동
         for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            if (i_EnemyBulletState[i]) begin
-                o_EnemyBulletPosition[i] = {i_EnemyBulletPosition[i][18:9], i_EnemyBulletPosition[i][8:0] + 1'b1};
+            if (temp0_EnemyBulletState[i]) begin
+                temp0_EnemyBulletPosition[i] = {i_EnemyBulletPosition[i][18:9], i_EnemyBulletPosition[i][8:0] + 1'b1};
             end
         end
 
         // 존재하는 적 탄을 이동
         for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-            if (i_PlayerBulletState[i]) begin
-                o_PlayerBulletPosition[i] = {i_PlayerBulletPosition[i][18:9], i_PlayerBulletPosition[i][8:0] - 1'b1};
+            if (temp0_PlayerBulletState[i]) begin
+                temp0_PlayerBulletPosition[i] = {i_PlayerBulletPosition[i][18:9], i_PlayerBulletPosition[i][8:0] - 1'b1};
             end
         end
 
