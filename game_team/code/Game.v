@@ -17,7 +17,10 @@ module Game
         parameter ENEMY_GAP_X       = 10'd72, 
         parameter ENEMY_GAP_Y       = 9'd60, 
         parameter PLAYER_CENTER_X   = 10'd302, 
-        parameter PLAYER_CENTER_Y   = 9'd372
+        parameter PLAYER_CENTER_Y   = 9'd372,
+
+        parameter NON_REVERSE       = 1'b0,
+        parameter REVERSE           = 1'b1
     ) (
         input   i_Clock, i_Reset, i_Tick, 
         input   i_PlayerMoveLeft, i_PlayerMoveRight, i_PlayerBulletShoot, i_GameStartStop, 
@@ -71,10 +74,11 @@ module Game
 
     generate
         for (gen_i = 0; gen_i < 5; gen_i = gen_i + 1) begin: firstRow
-            First_Row_Enemy_Move Enemy_R1 (
+            Enemy_Move Enemy_R1 (
                 .i_EnemyState       (c_EnemyState[gen_i]), 
                 .i_EnemyPosition    (c_EnemyPosition[gen_i]), 
                 .i_PhaseState       (c_StageState[8:7]), 
+                .i_fReverse         (0)
                 .o_EnemyPosition    (temp_EnemyPosition[gen_i])
             );
         end

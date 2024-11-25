@@ -1,40 +1,90 @@
 // 수정 중
 // i_ => temp_ => o_
-module Bullet_Gen_And_Move 
-    # (
-        parameter MAX_ENEMY         = 4'd15, 
-        parameter MAX_ENEMY_BULLET  = 4'd31, 
-        parameter MAX_PLAYER_BULLET = 4'd15
-    ) (
-        input       [MAX_ENEMY-1:0]         i_EnemyState, 
-        input       [MAX_ENEMY_BULLET-1:0]  i_EnemyBulletState, 
-        input                               i_PlayerState, 
-        input       [MAX_PLAYER_BULLET-1:0] i_PlayerBulletState, 
-        input       [18:0]                  i_EnemyPosition         [MAX_ENEMY-1:0], 
-        input       [18:0]                  i_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], 
-        input       [18:0]                  i_PlayerPosition, 
-        input       [18:0]                  i_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0], 
-        input                               i_fPlayerShoot, 
-        input       [8:0]                   i_StageState, 
+module Bullet_Gen_And_Move (
+        input i_Clk, i_Rst,
+        input i_fPlayerShoot,
 
-        output reg  [MAX_ENEMY_BULLET-1:0]  o_EnemyBulletState, 
-        output reg  [MAX_PLAYER_BULLET-1:0] o_PlayerBulletState, 
-        output reg  [18:0]                  o_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], 
-        output reg  [18:0]                  o_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0]
     );
+
+        parameter 
+                MAX_ENEMY         = 4'd15,
+                MAX_ENEMY_BULLET  = 4'd31,
+                MAX_PLAYER_BULLET = 4'd15;
+
+    reg [MAX_ENEMY-1:0]         c_EnemyState,           n_EnemyState;
+    reg [MAX_ENEMY_BULLET-1:0]  c_EnemyBulletState,     n_EnemyBulletState;
+    reg                         c_EnemyBulletFlag,      n_EnemyBulletFlag;
+    
+    reg [18:0]                  c_EnemyPosition         [MAX_ENEMY-1:0],            n_EnemyPosition         [MAX_ENEMY-1:0];
+    reg [18:0]                  c_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0],     n_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+
+    reg                         c_PlayerState,          n_PlayerState;
+    reg [MAX_PLAYER_BULLET-1:0] c_PlayerBulletState,    n_PlayerBulletState;
+
+    reg [18:0]                  c_PlayerPosition,       n_PlayerPosition;
+    reg [18:0]                  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+
+    reg [1:0]                   c_Phase,        n_Phase;
+    reg [6:0]                   c_StageState,   n_StageState;
 
     integer i, j;
 
-    reg [MAX_ENEMY_BULLET-1:0]  temp0_EnemyBulletState;
-    reg [MAX_PLAYER_BULLET-1:0] temp0_PlayerBulletState;
-    reg [18:0]                  temp0_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
-    reg [18:0]                  temp0_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+    wire fNextPhase;
+
+    assign fNextPhase = &c_StateState;
+
+
+    always @(posedge i_Clk, negedge i_Rst) begin
+        if (~i_Rst) begin
+            c_EnemyState            = 15'b111_1111_1111_1111;
+            c_EnemyBulletState      = 31'b000_0000_0000_0000_0000_0000_0000_0000;
+            c_EnemyBulletFlag       = 1'b0;
+
+            for (i = 0; i < 3; i = i + 1) begin
+                for (j = 0; j < 5; j = j + 1) begin
+                    c_EnemyPosition[5 * i + j] = {ENEMY_CENTER_X + (j - 2) * ENEMY_GAP_X, ENEMY_CENTER_Y + (i - 1) * ENEMY_GAP_Y};
+                end
+            end
+
+            for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
+                c_EnemyBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+            end
+
+            c_PlayerState           = 1'b1;
+            c_PlayerBulletState     = 15'b000_0000_0000_0000;
+
+            c_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
+
+            for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                c_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+            end
+
+            c_StageState            = 9'b00_0000000;
+
+        end else begin
+            c_fPlayerShoot          = n_fPlayerShoot;
+            c_fGameStartStop        = n_fGameStartStop;
+
+            c_EnemyState            = n_EnemyState;
+            c_EnemyBulletState      = n_EnemyBulletState;
+            c_PlayerState           = n_PlayerState;
+            c_PlayerBulletState     = n_PlayerBulletState;
+            
+            c_EnemyPosition         = n_EnemyPosition;
+            c_EnemyBulletPosition   = n_EnemyBulletPosition;
+            c_PlayerPosition        = n_PlayerPosition;
+            c_PlayerBulletPosition  = n_PlayerBulletPosition;
+
+            c_StageState            = n_StageState;
+        end
+    end
+
 
     always @* begin
-        temp0_EnemyBulletState = i_EnemyBulletState;
-        temp0_PlayerBulletState = i_PlayerBulletState;
-        temp0_EnemyBulletPosition = i_EnemyBulletPosition;
-        temp0_PlayerBulletPosition = i_PlayerBulletPosition;
+        n_Phase = fNextPhase ? c_Phase + 1 : c_Phase;
+
+        
+
 
         // 존재하는 적 탄을 이동
         for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
@@ -51,7 +101,7 @@ module Bullet_Gen_And_Move
         end
 
         // 발사될 적 탄을 추가
-        if (i_StageState[6:0] == 7'b000_0000) begin                                         // phase가 시작되는 tick에서
+        if (~(|i_StageState)) begin                                         // phase가 시작되는 tick에서
             for (i = 0; i < MAX_ENEMY; i = i + 1) begin                                     // 모든 적을 순회
                 if (~i_EnemyState[i]) begin                                                 // 적이 존재하면
                     for (j = 0; j < MAX_ENEMY_BULLET; j = j + 1) begin: EnemyBulletLoop     // 모든 적 탄의 상태를 순회
