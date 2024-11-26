@@ -1,0 +1,30 @@
+`timescale 1ns / 1ps
+
+module tb_Code_2_color;
+    reg i_Clk;
+    wire o_Clk;
+    wire [7:0] o_Red, o_Green, o_Blue;
+    wire o_vSync, o_hSync;
+    wire o_Blank;
+    wire [9:0] n_PixelPos_X, n_PixelPos_Y;
+
+GALAGA U0(clk, i_n_PixelPos_x,
+  input [9:0] i_n_PixelPos_y,
+  input [14:0] i_enemyState,
+  input [284:0] i_enemyPosition,
+  input [30:0] i_enemyBulletState,
+  input [18:0] i_enemyBulletPosition,
+  input i_playerState,
+  input [9:0] i_playerPosition,
+  input [14:0] i_playerBulletState,
+  input [18:0] i_playerBulletPosition,
+  output reg [2:0] o_pixelState
+);
+
+initial begin
+    i_Clk = 0;
+    #1_000_000;
+    $stop;
+  end
+endmodule
+
