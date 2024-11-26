@@ -1,24 +1,9 @@
+'include "./Parameter.v" //parameter 외부 참조
+
 // 플레이어의 움직임, 탄 발사는 flag 신호로 처리하지 못함
 // 
 module Game 
-    # (
-        parameter GAME_IDLE         = 3'b000, 
-        parameter GAME_PLAYING      = 3'b001, 
-        parameter GAME_VICTORY      = 3'b010, 
-        parameter GAME_DEFEAT       = 3'b011, 
-        parameter GAME_ERROR        = 3'b100, 
-
-        parameter MAX_ENEMY         = 4'd15, 
-        parameter MAX_ENEMY_BULLET  = 4'd31, 
-        parameter MAX_PLAYER_BULLET = 4'd15, 
-
-        parameter ENEMY_CENTER_X    = 10'd302, 
-        parameter ENEMY_CENTER_Y    = 9'd108, 
-        parameter ENEMY_GAP_X       = 10'd72, 
-        parameter ENEMY_GAP_Y       = 9'd60, 
-        parameter PLAYER_CENTER_X   = 10'd302, 
-        parameter PLAYER_CENTER_Y   = 9'd372
-    ) (
+    (
         input   i_Clock, i_Reset, i_Tick, 
         input   i_PlayerMoveLeft, i_PlayerMoveRight, i_PlayerBulletShoot, i_GameStartStop, 
 
