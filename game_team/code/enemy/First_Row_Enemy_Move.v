@@ -1,3 +1,6 @@
+// 비트 10개만 받도록 수정
+// reg => wire
+// assign으로 수정
 module First_Row_Enemy_Move
     # ( 
         parameter NONE              = {19{1'b1}}, 

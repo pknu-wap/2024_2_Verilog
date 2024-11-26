@@ -1,5 +1,7 @@
 // 수정 중
 // i_ => temp_ => o_
+// fShoot 따로 정의
+// shootingpoint param으로 정의
 module Bullet_Gen_And_Move 
     # (
         parameter MAX_ENEMY         = 4'd15, 

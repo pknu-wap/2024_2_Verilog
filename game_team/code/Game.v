@@ -1,7 +1,9 @@
-'include "./Parameter.v" //parameter 외부 참조
-
 // 플레이어의 움직임, 탄 발사는 flag 신호로 처리하지 못함
-// 
+// {15{1'b1}}
+// fTick으로 수정
+
+'include "./Parameter.v"    // parameter 외부 참조
+
 module Game 
     (
         input   i_Clock, i_Reset, i_Tick, 
@@ -100,22 +102,22 @@ module Game
 
     // assign fPlayerLeft           = !i_PlayerMoveLeft     &   c_fPlayerLeft;
     // assign fPlayerRight          = !i_PlayerMoveRight    &   c_fPlayerRight;
-    assign fPlayerShoot             = ~i_PlayerBulletShoot  &   ~|c_fPlayerShoot;   // flag가 0일 때 발사 가능
-    assign fGameStartStop           = ~i_GameStartStop      &   c_fGameStartStop;
+    assign  fPlayerShoot            = ~i_PlayerBulletShoot  &   ~|c_fPlayerShoot;   // flag가 0일 때 발사 가능
+    assign  fGameStartStop          = ~i_GameStartStop      &   c_fGameStartStop;
 
-    assign o_EnemyState             = c_EnemyState;
-    assign o_EnemyBulletState       = c_EnemyBulletState;
-    assign o_PlayerState            = c_PlayerState;
-    assign o_PlayerBulletState      = c_PlayerBulletState;
-    assign o_EnemyPosition          = c_EnemyPosition;
-    assign o_EnemyBulletPosition    = c_EnemyBulletPosition;
-    assign o_PlayerPosition         = c_PlayerPosition;
-    assign o_PlayerBulletPosition   = c_PlayerBulletPosition;
-    assign o_GameState              = c_GameState;
-    assign o_StageState             = c_StageState;
-    assign o_Score                  = c_Score;
+    assign  o_EnemyState            = c_EnemyState;
+    assign  o_EnemyBulletState      = c_EnemyBulletState;
+    assign  o_PlayerState           = c_PlayerState;
+    assign  o_PlayerBulletState     = c_PlayerBulletState;
+    assign  o_EnemyPosition         = c_EnemyPosition;
+    assign  o_EnemyBulletPosition   = c_EnemyBulletPosition;
+    assign  o_PlayerPosition        = c_PlayerPosition;
+    assign  o_PlayerBulletPosition  = c_PlayerBulletPosition;
+    assign  o_GameState             = c_GameState;
+    assign  o_StageState            = c_StageState;
+    assign  o_Score                 = c_Score;
 
-    always @(negedge i_Reset, posedge i_Tick) begin
+    always @(negedge i_Reset, posedge i_Clock) begin
         if (~i_Reset) begin
             // c_fPlayerLeft           = 1'b1;
             // c_fPlayerRight          = 1'b1;
@@ -182,12 +184,40 @@ module Game
                 // DONE
                 // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
                 // 2. 동작을 정의: 적
+                n_fPlayerShoot          = {4{1'b0}};
+
+                n_EnemyState            = {15{1'b0}};
+                n_EnemyBulletState      = {31{1'b0}};
+                n_PlayerState           = 1'b1;
+                n_PlayerBulletState     = {15{1'b0}};
+
+                for (i = 0; i < 15; i = i + 1) begin
+                    n_EnemyPosition[i] = {19{1'b0}};
+                end
+
+                for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
+                    n_EnemyBulletPosition[i] = {19{1'b0}}
+                end
+
+                n_PlayerPosition = {19{1'b0}};
+
+                for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                    n_PlayerBulletPosition[i] = {19{1'b0}};
+                end
+
+                n_StageState            = {9{1'b0}};
+                n_Score                 = {14{1'b0}};
+
+                if (fGameStartStop) n_GameState = GAME_INITIAL;
+                else                n_GameState = GAME_IDLE;
+            end
+            GAME_INITIAL: begin
                 n_fPlayerShoot          = 4'd11;
 
-                n_EnemyState            = 15'b111_1111_1111_1111;
-                n_EnemyBulletState      = 31'b000_0000_0000_0000_0000_0000_0000_0000;
+                n_EnemyState            = {15{1'b1}};
+                n_EnemyBulletState      = {31{1'b0}};
                 n_PlayerState           = 1'b1;
-                n_PlayerBulletState     = 15'b000_0000_0000_0000;
+                n_PlayerBulletState     = {15{1'b0}};
 
                 for (i = 0; i < 3; i = i + 1) begin
                     for (j = 0; j < 5; j = j + 1) begin
@@ -196,20 +226,18 @@ module Game
                 end
 
                 for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-                    n_EnemyBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+                    n_EnemyBulletPosition[i] = {PORCH_CENTER_X, PORCH_CENTER_Y};
                 end
 
                 n_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
 
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                    n_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+                    n_PlayerBulletPosition[i] = {PORCH_CENTER_X, PORCH_CENTER_Y};
                 end
 
-                n_StageState            = 9'b00_0000000;
-                n_Score                 = 14'b00_0000_0000_0000;
-
-                if (fGameStartStop) n_GameState = GAME_PLAYING;
-                else                n_GameState = GAME_IDLE;
+                n_StageState            = {9{1'b0}};
+                n_GameState             = GAME_PLAYING;
+                n_Score                 = {14{1'b0}};
             end
             GAME_PLAYING: begin
                 // TODO
@@ -224,7 +252,12 @@ module Game
                 else if (~|c_Counter)   n_fPlayerShoot = c_fPlayerShoot;
                 else                    n_fPlayerShoot = c_fPlayerShoot - 1;
 
-
+                // ex
+                for (i = 0; i < 3; i = i + 1) begin
+                    for (j = 0; j < 5; j = j + 1) begin
+                        n_EnemyPosition[5 * i + j] = fTick ?  : c_EnemyPosition[5 * i + j];
+                    end
+                end
 
 
 
