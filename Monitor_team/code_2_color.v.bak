@@ -1,15 +1,15 @@
 module GALAGA(
-  input clk,
-  input [9:0] i_n_PixelPos_x, // ?? x ??
-  input [9:0] i_n_PixelPos_y, // ?? y ??
+  input i_Clk,
+  input [9:0] i_n_PixelPos_x, // ?? x??
+  input [9:0] i_n_PixelPos_y, // ?? y??
   input [14:0] i_enemyState, // ?? ? ??
   input [284:0] i_enemyPosition, // ?? ? ??
-  input [30:0] i_enemyBulletState, // ? ?? ?? ??
-  input [18:0] i_enemyBulletPosition [0:30], // ? ?? ?? ??
+  input [30:0] i_enemyBulletState, // ? ?? ??
+  input [(30+1)*19-1:0] i_enemyBulletPosition, // ? ?? ?? (Flattened)
   input i_playerState,  // ??? ??
   input [9:0] i_playerPosition,  // ??? ??
-  input [14:0] i_playerBulletState, // ??? ?? ?? ??
-  input [18:0] i_playerBulletPosition [0:40], // ??? ?? ?? ??
+  input [14:0] i_playerBulletState, // ??? ?? ??
+  input [(40+1)*19-1:0] i_playerBulletPosition, // ??? ?? ?? (Flattened)
   output reg [2:0] o_pixelState // ?? ?? ?? ??
 );
 
@@ -23,29 +23,29 @@ module GALAGA(
   localparam PLAYER_BULLET_WIDTH = 3'b100;     // 4px
   localparam PLAYER_BULLET_HEIGHT = 5'b10000;   // 16px
 
-  reg [9:0] r_enemy_x, r_enemy_y; // ? ??
-  reg [9:0] r_bullet_x, r_bullet_y; // ?? ??
-  reg [9:0] r_player_x, r_player_y; // ???? ??
+  reg [9:0] r_enemy_x, r_enemy_y; //???
+  reg [9:0] r_bullet_x, r_bullet_y; //????
+  reg [9:0] r_player_x, r_player_y; //??????
 
-  // ?? ?? ?? ??
+  //????
   function is_in_range(
-  input [9:0] i_obj_x, i_obj_y;       // ?? ??
-  input [9:0] i_obj_width, i_obj_height; // ?? ??
-  input [9:0] i_n_pixel_x, i_n_pixel_y;);  // ?? ?? ??
+  input [9:0] i_obj_x, i_obj_y,       //??
+  input [9:0] i_obj_width, i_obj_height, //??
+  input [9:0] i_n_pixel_x, i_n_pixel_y);  //????
   begin
     is_in_range = (i_n_pixel_x >= i_obj_x) && (i_n_pixel_x < i_obj_x + i_obj_width) &&
                   (i_n_pixel_y >= i_obj_y) && (i_n_pixel_y < i_obj_y + i_obj_height);
   end
   endfunction
 
-  always @(posedge clk) begin
+  always @(posedge i_Clk) begin
     o_pixelState = 3'b000;
 
-    // ??? ?? ?? (?? ?? ??)
+    //???????
     r_bullet_x = 0;
     r_bullet_y = 0;
 
-    // ??? ?? ??? ?? ?? ? ?? ??
+    //?????????
     {r_bullet_x, r_bullet_y} =
       (i_playerBulletState[0] ? i_playerBulletPosition[0] :
       (i_playerBulletState[1] ? i_playerBulletPosition[1] :
@@ -62,7 +62,7 @@ module GALAGA(
       (i_playerBulletState[12] ? i_playerBulletPosition[12] :
       (i_playerBulletState[13] ? i_playerBulletPosition[13] :
       (i_playerBulletState[14] ? i_playerBulletPosition[14] :
-      (i_playerBulletState[15] ? i_playerBulletPosition[15] : {0, 0}))))))))))))))));
+      (i_playerBulletState[15] ? i_playerBulletPosition[15] : {0,0}))))))))))))))));
 
     // ??? ?? ?? ?? ? ?? ?? ??
     o_pixelState = 
@@ -71,14 +71,14 @@ module GALAGA(
       ? 3'b010 
       : o_pixelState;
 
-    // ??? ??
+    // ?????
     o_pixelState = 
       (i_playerState && 
       is_in_range(i_playerPosition, 280, PLAYER_WIDTH, PLAYER_HEIGHT, i_n_PixelPos_x, i_n_PixelPos_y)) 
       ? 3'b001 
       : o_pixelState;
 
-    // ? ?? (?? ?? ??)
+    // ???
     r_enemy_x = 0;
     r_enemy_y = 0;
 
@@ -98,7 +98,7 @@ module GALAGA(
       (i_enemyState[11] ? i_enemyPosition[227:209] :
       (i_enemyState[12] ? i_enemyPosition[246:228] :
       (i_enemyState[13] ? i_enemyPosition[265:247] :
-      (i_enemyState[14] ? i_enemyPosition[284:266] : {0, 0})))))))))))))));
+      (i_enemyState[14] ? i_enemyPosition[284:266] : 19'b0)))))))))))))));
 
     // ? ?? ?? ? ?? ?? ??
     o_pixelState = 
@@ -107,7 +107,7 @@ module GALAGA(
       ? 3'b100 
       : o_pixelState;
 
-    // ? ?? ?? (?? ?? ??)
+    // ?????
     r_bullet_x = 0;
     r_bullet_y = 0;
 
@@ -143,7 +143,7 @@ module GALAGA(
       (i_enemyBulletState[27] ? i_enemyBulletPosition[27] :
       (i_enemyBulletState[28] ? i_enemyBulletPosition[28] :
       (i_enemyBulletState[29] ? i_enemyBulletPosition[29] :
-      (i_enemyBulletState[30] ? i_enemyBulletPosition[30] : {0, 0})))))))))))))))))))))))))))))));
+      (i_enemyBulletState[30] ? i_enemyBulletPosition[30] : 19'b0)))))))))))))))))))))))))))))));
 
     // ? ?? ?? ?? ? ?? ?? ??
     o_pixelState = 
@@ -154,3 +154,4 @@ module GALAGA(
 end
 
 endmodule
+
