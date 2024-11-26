@@ -9,7 +9,7 @@ module Bullet_Gen_And_Move (
     parameter 
         MAX_ENEMY         = 4'd15,
         MAX_ENEMY_BULLET  = 4'd30,
-        MAX_PLAYER_BULLET = 4'd15;
+        MAX_PLAYER_BULLET = 4'd16; // 연산 편의 위해 16으로 변경
 
     parameter
         DISPLAY_VERTICAL   = 640,
@@ -20,6 +20,7 @@ module Bullet_Gen_And_Move (
         BULLET_HEIGHT   = 20;
 
     parameter
+        DEAD_POSITION   = 19'b111_1111_1111_1111_1111,
         VERTICAL_BORDER = DISPLAY_VERTICAL - BULLET_HEIGHT;
 
 
@@ -36,8 +37,8 @@ module Bullet_Gen_And_Move (
 
     reg                         c_PlayerState,          n_PlayerState;
     reg [MAX_PLAYER_BULLET-1:0] c_PlayerBulletState,    n_PlayerBulletState;
-    reg [3:0]                   c_PlayerBulletCnt,      n_PlayerBulletCnt;
-    reg [3:0]                   c_PlayerShootCnt,       n_PlayerShootCnt;
+    reg [3:0]                   c_PlayerBulletCnt,      n_PlayerBulletCnt;      // 몇번째 총알 쏠 차례인지 (0 ~ 15)
+    reg [3:0]                   c_PlayerShootCoolDown,  n_PlayerShootCoolDown;  // 쏜지 몇 Tick 지났는지  (0 ~ 11)
     reg                         c_PlayerShootPushed,    n_PlayerShootPushed;
 
     reg [18:0]                  c_PlayerPosition,       n_PlayerPosition;
@@ -49,17 +50,23 @@ module Bullet_Gen_And_Move (
     // wire
     wire fNextPhase;
     wire fEnemyShootFirst, fEnemyShootSecond;
-    wire fPlayerCanShoot;
+    wire fPlayerCanShoot, fPlayerShoot;
     wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletLst;
+    wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletLst;
 
     // assign
     assign fNextPhase = &c_PhaseCnt;
     assign fEnemyShootFirst  = fNextPhase & c_EnemyBulletFlag;
     assign fEnemyShootSecond = fNextPhase & ~c_EnemyBulletFlag;
-    assign fPlayerCanShoot = iPl
+    assign fPlayerCanShoot = ~(|c_PlayerShootCoolDown);
+    assign fPlayerShoot = fPlayerCanShoot & c_PlayerShootPushed;
 
     for (t = 0; t < MAX_ENEMY_BULLET - 1; t = t + 1) begin
-        assign fEnemyBulletLst[t] = c_ENemyBulletPosition[t][8:0] == VERTICAL_BORDER;
+        assign fEnemyBulletLst[t] = c_EnemyBulletPosition[t][8:0] == VERTICAL_BORDER;
+    end
+
+    for (t = 0; t < MAX_PLAYER_BULLET - 1; t = t + 1) begin
+        assign fPlayerBulletLst[t] = ~(|c_EnemyBulletPosition[t][8:0]);
     end
 
 
@@ -82,9 +89,10 @@ module Bullet_Gen_And_Move (
             c_PlayerState           = 1'b1;
             c_PlayerBulletState     = 15'b000_0000_0000_0000;
             c_PlayerBulletCnt       = 4'b0000;
+            c_PlayerShootCoolDown   = 0;
             c_PlayerShootPushed     = 0;
 
-            c_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
+            c_PlayerPosition        = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
 
             for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
                 c_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
@@ -99,6 +107,7 @@ module Bullet_Gen_And_Move (
             c_PlayerState           = n_PlayerState;
             c_PlayerBulletState     = n_PlayerBulletState;
             c_PlayerBulletCnt       = n_PlayerBulletCnt;
+            c_PlayerShootCoolDown   = n_PlayerShootCoolDown;
             c_PlayerShootPushed     = n_PlayerShootPushed;
             
             c_EnemyPosition         = n_EnemyPosition;
@@ -119,7 +128,8 @@ module Bullet_Gen_And_Move (
         n_EnemyPosition         = c_EnemyPosition;
         n_PlayerPosition        = c_PlayerPosition;
 
-        n_PlayerBulletCnt       = 
+        n_PlayerShootCoolDown   = fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? c_PlayerShootCoolDown - 1 : c_PlayerShootCoolDown};
+        n_PlayerBulletCnt       = fPlayerShoot ? c_PlayerBulletCnt + 1 : c_PlayerBulletCnt;
         n_EnemyBulletFlag       = fEnemyShoot ? ~c_EnemyBulletFlag : c_EnemyBulletFlag;
 
         // Enemy Bullet State
@@ -129,64 +139,23 @@ module Bullet_Gen_And_Move (
         end
 
         // Enemy Bullet Position
-        for (i = 0; i < MAX_ENEMY_BULLET / 2; i = i + 1) begin
+        for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
             n_EnemyBulletPosition[i] = (i < MAX_ENEMY_BULLET / 2 ? fEnemyShootFirst : fEnemyShootSecond) ? 
                 c_EnemyPosition[i] : {c_EnemyBulletState[i] ? 
-                    c_EnemyBUlletPosition[i] + 1 : 19'b111_1111_1111_1111_1111
-                };
+                    c_EnemyBUlletPosition[i] + 1 : DEAD_POSITION};
         end
 
         // Player Bullet State
-
-        n_PlayerBulletState     = ;
-
-        n_PlayerBulletPosition  = ;
-
-
-        // 존재하는 적 탄을 이동
-        for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            if (temp0_EnemyBulletState[i]) begin
-                temp0_EnemyBulletPosition[i] = {i_EnemyBulletPosition[i][18:9], i_EnemyBulletPosition[i][8:0] + 1'b1};
-            end
-        end
-
-        // 존재하는 적 탄을 이동
         for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-            if (temp0_PlayerBulletState[i]) begin
-                temp0_PlayerBulletPosition[i] = {i_PlayerBulletPosition[i][18:9], i_PlayerBulletPosition[i][8:0] - 1'b1};
-            end
+            n_PlayerBulletState[i] = fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : {
+                c_PlayerBulletState[i] & ~fPlayerBulletLst[i];
+            }
         end
-
-        // 발사될 적 탄을 추가
-        if (~(|i_StageState)) begin                                         // phase가 시작되는 tick에서
-            for (i = 0; i < MAX_ENEMY; i = i + 1) begin                                     // 모든 적을 순회
-                if (~i_EnemyState[i]) begin                                                 // 적이 존재하면
-                    for (j = 0; j < MAX_ENEMY_BULLET; j = j + 1) begin: EnemyBulletLoop     // 모든 적 탄의 상태를 순회
-                        if (~i_EnemyBulletState[j]) begin                                   // 적 탄이 존재하지 않는 인덱스에 적 탄을 생성
-                            temp_EnemyBulletPosition[18:9] = i_EnemyPosition[i][18:9] + 16; // 적 탄의 가로 좌표 계산
-                            temp_EnemyBulletPosition[8:0] = i_EnemyPosition[i][8:0] + 24;   // 적 탄의 세로 좌표 계산
-                            o_EnemyBulletPosition[j] = temp_EnemyBulletPosition;            // 계산된 적 탄의 좌표 할당
-                            o_EnemyBulletState[j] = 1'b1;                                   // 적 탄의 상태 최신화
-                            disable EnemyBulletLoop;                                        // 반복문에서 탈출
-                        end
-                    end
-                end
-            end
-        end
-
-        // 발사될 플레이어 탄을 추가
-        if (i_fPlayerShoot) begin                                                           // 플레이어 탄이 발사될 때
-            if (i_PlayerState) begin                                                        // 플레이어가 존재한다면
-                for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin: PlayerBulletLoop       // 모든 플레이어 탄의 상태를 순회
-                    if (~i_PlayerBulletState[i]) begin                                      // 플레이어 탄이 존재하지 않는 인덱스에 플레이어 탄을 생성
-                        temp_PlayerBulletPosition[18:9] = i_PlayerPosition[18:9] + 10;      // 플레이어 탄의 가로 좌표 계산
-                        temp_PlayerBulletPosition[8:0] = i_PlayerPosition[8:0] - 16;        // 플레이어 탄의 세로 좌표 계산
-                        o_PlayerBulletPosition[i] = temp_PlayerBulletPosition;              // 계산된 플레이어 탄의 좌표 할당
-                        o_PlayerBulletState[i] = 1'b1;                                      // 플레이어 탄의 상태 최신화
-                        disable PlayerBulletLoop;                                           // 반복문에서 탈출
-                    end
-                end
-            end
+        
+        for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+            n_PlayerBulletPosition[i] = fPlayerShoot & (i == c_PlayerBulletCnt) ? 
+                c_PlayerPosition[i] : {c_PlayerBulletState[i] ? 
+                    c_PlayerBulletState[i] & ~fPlayerBulletLst[i] : DEAD_POSITION};
         end
     end
 
