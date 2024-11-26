@@ -6,11 +6,27 @@ module Bullet_Gen_And_Move (
 
     );
 
-        parameter 
-                MAX_ENEMY         = 4'd15,
-                MAX_ENEMY_BULLET  = 4'd31,
-                MAX_PLAYER_BULLET = 4'd15;
+    parameter 
+        MAX_ENEMY         = 4'd15,
+        MAX_ENEMY_BULLET  = 4'd30,
+        MAX_PLAYER_BULLET = 4'd15;
 
+    parameter
+        DISPLAY_VERTICAL   = 640,
+        DISPLAY_HORIZONTAL = 480,
+        
+    parameter
+        BULLET_WIDTH    = 6;
+        BULLET_HEIGHT   = 20;
+
+    parameter
+        VERTICAL_BORDER = DISPLAY_VERTICAL - BULLET_HEIGHT;
+
+
+    integer i, j;
+    genvar t;
+
+    // reg
     reg [MAX_ENEMY-1:0]         c_EnemyState,           n_EnemyState;
     reg [MAX_ENEMY_BULLET-1:0]  c_EnemyBulletState,     n_EnemyBulletState;
     reg                         c_EnemyBulletFlag,      n_EnemyBulletFlag;
@@ -20,6 +36,9 @@ module Bullet_Gen_And_Move (
 
     reg                         c_PlayerState,          n_PlayerState;
     reg [MAX_PLAYER_BULLET-1:0] c_PlayerBulletState,    n_PlayerBulletState;
+    reg [3:0]                   c_PlayerBulletCnt,      n_PlayerBulletCnt;
+    reg [3:0]                   c_PlayerShootCnt,       n_PlayerShootCnt;
+    reg                         c_PlayerShootPushed,    n_PlayerShootPushed;
 
     reg [18:0]                  c_PlayerPosition,       n_PlayerPosition;
     reg [18:0]                  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
@@ -27,11 +46,21 @@ module Bullet_Gen_And_Move (
     reg [1:0]                   c_Phase,        n_Phase;
     reg [6:0]                   c_PhaseCnt,     n_PhaseCnt;
 
-    integer i, j;
-
+    // wire
     wire fNextPhase;
+    wire fEnemyShootFirst, fEnemyShootSecond;
+    wire fPlayerCanShoot;
+    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletLst;
 
+    // assign
     assign fNextPhase = &c_PhaseCnt;
+    assign fEnemyShootFirst  = fNextPhase & c_EnemyBulletFlag;
+    assign fEnemyShootSecond = fNextPhase & ~c_EnemyBulletFlag;
+    assign fPlayerCanShoot = iPl
+
+    for (t = 0; t < MAX_ENEMY_BULLET - 1; t = t + 1) begin
+        assign fEnemyBulletLst[t] = c_ENemyBulletPosition[t][8:0] == VERTICAL_BORDER;
+    end
 
 
     always @(posedge i_Clk, negedge i_Rst) begin
@@ -52,6 +81,8 @@ module Bullet_Gen_And_Move (
 
             c_PlayerState           = 1'b1;
             c_PlayerBulletState     = 15'b000_0000_0000_0000;
+            c_PlayerBulletCnt       = 4'b0000;
+            c_PlayerShootPushed     = 0;
 
             c_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
 
@@ -67,6 +98,8 @@ module Bullet_Gen_And_Move (
             c_EnemyBulletState      = n_EnemyBulletState;
             c_PlayerState           = n_PlayerState;
             c_PlayerBulletState     = n_PlayerBulletState;
+            c_PlayerBulletCnt       = n_PlayerBulletCnt;
+            c_PlayerShootPushed     = n_PlayerShootPushed;
             
             c_EnemyPosition         = n_EnemyPosition;
             c_EnemyBulletPosition   = n_EnemyBulletPosition;
@@ -80,16 +113,33 @@ module Bullet_Gen_And_Move (
     always @* begin
         n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
         n_PhaseCnt              = c_PhaseCnt + 1;
+
         n_EnemyState            = c_EnemyState;
         n_PlayerState           = c_PlayerState;
         n_EnemyPosition         = c_EnemyPosition;
         n_PlayerPosition        = c_PlayerPosition;
 
+        n_PlayerBulletCnt       = 
+        n_EnemyBulletFlag       = fEnemyShoot ? ~c_EnemyBulletFlag : c_EnemyBulletFlag;
 
-        n_EnemyBulletState      = ;
-        n_EnemyBulletPosition   = c_EnemyBulletPosition;
-        
+        // Enemy Bullet State
+        for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
+            n_EnemyBulletState[i] = (i < MAX_ENEMY_BULLET / 2 ? fEnemyShootFirst : fEnemyShootSecond) ?
+                1 : c_EnemyBulletState[i] & ~fEnemyBulletLst[i];
+        end
+
+        // Enemy Bullet Position
+        for (i = 0; i < MAX_ENEMY_BULLET / 2; i = i + 1) begin
+            n_EnemyBulletPosition[i] = (i < MAX_ENEMY_BULLET / 2 ? fEnemyShootFirst : fEnemyShootSecond) ? 
+                c_EnemyPosition[i] : {c_EnemyBulletState[i] ? 
+                    c_EnemyBUlletPosition[i] + 1 : 19'b111_1111_1111_1111_1111
+                };
+        end
+
+        // Player Bullet State
+
         n_PlayerBulletState     = ;
+
         n_PlayerBulletPosition  = ;
 
 
