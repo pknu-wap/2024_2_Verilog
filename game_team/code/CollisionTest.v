@@ -1,8 +1,52 @@
-'include "./Parameter.v"
+// 'include "./Parameter.v"
 
 module Collision
+    # ( 
+        // Parameter
+        parameter MAX_ENEMY         = 4'd3, 
+        parameter MAX_ENEMY_BULLET  = 4'd3, 
+        parameter MAX_PLAYER_BULLET = 4'd3, 
 
-    genvar i, j, k, l, m, n, o, p, q, r, s;
+        parameter GAME_IDLE         = 3'b000, 
+        parameter GAME_PLAYING      = 3'b001, 
+        parameter GAME_VICTORY      = 3'b010, 
+        parameter GAME_DEFEAT       = 3'b011, 
+        parameter GAME_ERROR        = 3'b100, 
+
+        parameter ENEMY_CENTER_X    = 10'd302, 
+        parameter ENEMY_CENTER_Y    = 9'd108, 
+        parameter ENEMY_GAP_X       = 10'd72, 
+        parameter ENEMY_GAP_Y       = 9'd60, 
+        parameter PLAYER_CENTER_X   = 10'd302, 
+        parameter PLAYER_CENTER_Y   = 9'd372,
+
+        parameter ENEMY_WIDTH       = 10'd36, 
+        parameter ENEMY_HEIGHT      = 9'd24, 
+        parameter PLAYER_WIDTH      = 10'd24, 
+        parameter PLAYER_HEIGHT     = 9'd36, 
+        parameter BULLET_WIDTH      = 10'd4, 
+        parameter BULLET_HEIGHT     = 9'd16, 
+
+        // parameter NONE           = {19{1'b1}},               deprecated
+        parameter NONE              = {10'd720, 9'd500},    //  updated, 소멸된 개체는 여백의 중앙에 위치
+        parameter MONITOR_WIDTH     = 10'd640, 
+        parameter MONITOR_HEIGHT    = 9'd480, 
+             
+        parameter PHASE_1           = 2'b00, 
+        parameter PHASE_2	        = 2'b01, 
+        parameter PHASE_3	        = 2'b10, 
+        parameter PHASE_4	        = 2'b11, 
+
+        parameter CENTER_X	        = 302, 
+        parameter CENTER_Y	        = 108, 
+        parameter GAP_X		        = 72, 
+        parameter GAP_Y		        = 60
+    ) (
+        input i_Clk, i_Rst
+    );
+
+    genvar i, j, k, l, m, n, o, p;
+    integer q, r, s;
 
     reg     [MAX_ENEMY-1:0]         i_EnemyState;
     reg     [MAX_ENEMY_BULLET-1:0]  i_EnemyBulletState;
@@ -100,7 +144,7 @@ module Collision
 
         // PlayerBulletCollision
         for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin
-            assign  fPlayerBullet_VS_Border[k]      = ~|i_PlayerBulletPosition[j][8:2] ? 1'b1 : 1'b0;
+            assign  fPlayerBullet_VS_Border[k]      = ~|i_PlayerBulletPosition[k][8:2] ? 1'b1 : 1'b0;
             for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin
                 assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
                                                                     i_PlayerBulletPosition[k], 
@@ -158,28 +202,55 @@ module Collision
     endgenerate
 
     // Processing
-    generate
-        // EnemyBulletProcessing
-        for (q = 0; q < MAX_ENEMY_BULLET; q = q + 1) begin
-            o_EnemyBulletState[q]       = fEnemyBulletCollision[q]  ? 1'b0 : i_EnemyBulletState[q];
-            o_EnemyBulletPosition[q]    = fEnemyBulletCollision[q]  ? NONE : i_EnemyBulletPosition[q];
-        end
 
-        // PlayerBulletProcessing
-        for (r = 0; r < MAX_PLAYER_BULLET; r = r + 1) begin
-            o_PlayerBulletState[r]      = fPlayerBulletCollision[r] ? 1'b0 : i_PlayerBulletState[r];
-            o_PlayerBulletPosition[r]   = fPlayerBulletCollision[r] ? NONE : i_PlayerBulletPosition[r];
-        end
+    always @(posedge i_Clk, negedge i_Rst) begin
+        if (~i_Rst) begin
+            i_EnemyBulletState[0] = 1'b1;
+            i_EnemyBulletState[1] = 1'b1;
+            i_EnemyBulletState[2] = 1'b1;
+            i_EnemyBulletPosition[0] = {10'd150, 9'd200};
+            i_EnemyBulletPosition[1] = {10'd200, 9'd360};
+            i_EnemyBulletPosition[2] = {10'd300, 9'd250};
 
-        // EnemyProcessing
-        for (s = 0; s < MAX_ENEMY; s = s + 1) begin
-            o_EnemyState[s]             = fEnemyCollision[s]        ? 1'b0 : i_EnemyState[s];
-            o_EnemyPosition[s]          = fEnemyCollision[s]        ? NONE : i_EnemyPosition[s];
-        end
+            i_PlayerBulletState[0] = 1'b1;
+            i_PlayerBulletState[1] = 1'b1;
+            i_PlayerBulletState[2] = 1'b1;
+            i_PlayerBulletPosition[0] = {10'd250, 9'd150};
+            i_PlayerBulletPosition[1] = {10'd302, 9'd260};
+            i_PlayerBulletPosition[2] = {10'd320, 9'd120};
 
-        // PlayerProcessing
-        o_PlayerState                   = fPlayerCollision          ? 1'b0 : i_PlayerState;
-        o_PlayerPosition                = fPlayerCollision          ? NONE : i_PlayerPosition;
-    endgenerate
+            i_EnemyState[0] = 1'b1;
+            i_EnemyState[1] = 1'b1;
+            i_EnemyState[2] = 1'b1;
+            i_EnemyPosition[0] = {10'd100, 9'd100};
+            i_EnemyPosition[1] = {10'd200, 9'd100};
+            i_EnemyPosition[2] = {10'd300, 9'd100};
+
+            i_PlayerState = 1'b1;
+            i_PlayerPosition = {10'd202};
+        end else begin
+            // EnemyBulletProcessing
+            for (q = 0; q < MAX_ENEMY_BULLET; q = q + 1) begin
+                o_EnemyBulletState[q]       = fEnemyBulletCollision[q]  ? 1'b0 : i_EnemyBulletState[q];
+                o_EnemyBulletPosition[q]    = fEnemyBulletCollision[q]  ? NONE : i_EnemyBulletPosition[q];
+            end
+
+            // PlayerBulletProcessing
+            for (r = 0; r < MAX_PLAYER_BULLET; r = r + 1) begin
+                o_PlayerBulletState[r]      = fPlayerBulletCollision[r] ? 1'b0 : i_PlayerBulletState[r];
+                o_PlayerBulletPosition[r]   = fPlayerBulletCollision[r] ? NONE : i_PlayerBulletPosition[r];
+            end
+
+            // EnemyProcessing
+            for (s = 0; s < MAX_ENEMY; s = s + 1) begin
+                o_EnemyState[s]             = fEnemyCollision[s]        ? 1'b0 : i_EnemyState[s];
+                o_EnemyPosition[s]          = fEnemyCollision[s]        ? NONE : i_EnemyPosition[s];
+            end
+
+            // PlayerProcessing
+            o_PlayerState                   = fPlayerCollision          ? 1'b0 : i_PlayerState;
+            o_PlayerPosition                = fPlayerCollision          ? NONE : i_PlayerPosition;
+        end
+    end
 
 endmodule
