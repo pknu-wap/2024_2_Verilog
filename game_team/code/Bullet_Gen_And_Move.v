@@ -154,9 +154,7 @@ module Bullet_Gen_And_Move (input i_Clk, i_Rst, i_Btn);
             end
             
             for (i = 0; i < MAX_ENEMY; i = i + 1) begin
-              for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
-                c_EnemyBulletState[i][j] = n_EnemyBulletState[i][j];
-              end
+                c_EnemyBulletState[i] = n_EnemyBulletState[i];
             end
             
             for (i = 0; i < MAX_ENEMY; i = i + 1) begin
