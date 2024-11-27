@@ -1,89 +1,136 @@
-// 수정 중
-// i_ => temp_ => o_
-module Bullet_Gen_And_Move (
-        input i_Clk, i_Rst,
-        input i_fPlayerShoot,
-
-    );
-
+module Bullet_Gen_And_Move (input i_Clk, i_Rst, i_Btn);
     parameter 
-        MAX_ENEMY         = 4'd15,
-        MAX_ENEMY_BULLET  = 4'd30,
-        MAX_PLAYER_BULLET = 4'd16; // 연산 편의 위해 16으로 변경
+        MAX_ENEMY_ROW         = 5,
+        MAX_ENEMY_COL         = 3,
+        MAX_ENEMY             = MAX_ENEMY_ROW * MAX_ENEMY_COL,
+        MAX_ENEMY_BULLET_SET  = 2,
+        MAX_PLAYER_BULLET     = 16; 
 
     parameter
-        DISPLAY_VERTICAL   = 640,
-        DISPLAY_HORIZONTAL = 480,
+        DISPLAY_VERTICAL   = 480,
+        DISPLAY_HORIZONTAL = 640;
         
     parameter
-        BULLET_WIDTH    = 6;
+        BULLET_WIDTH    = 6,
         BULLET_HEIGHT   = 20;
+        
+    parameter
+        ENEMY_CENTER_X    = 302, 
+        ENEMY_CENTER_Y    = 108,
+        ENEMY_GAP_X       = 72, 
+        ENEMY_GAP_Y       = 60, 
+        PLAYER_CENTER_X   = 302, 
+        PLAYER_CENTER_Y   = 372;
+        
+    parameter
+        ENEMY_BULLET_SPEED    = 2,
+        PLAYER_BULLET_SPEED   = 4;
 
     parameter
-        DEAD_POSITION   = 19'b111_1111_1111_1111_1111,
+        NONE            = 19'b111_1111_1111_1111_1111,
         VERTICAL_BORDER = DISPLAY_VERTICAL - BULLET_HEIGHT;
 
-
     integer i, j;
-    genvar t;
+    genvar x, y, t, p;
 
     // reg
-    reg [MAX_ENEMY-1:0]         c_EnemyState,           n_EnemyState;
-    reg [MAX_ENEMY_BULLET-1:0]  c_EnemyBulletState,     n_EnemyBulletState;
-    reg                         c_EnemyBulletFlag,      n_EnemyBulletFlag;
+    reg [MAX_ENEMY-1:0]             c_EnemyState,                      n_EnemyState;
+    reg [MAX_ENEMY_BULLET_SET-1:0]  c_EnemyBulletState[MAX_ENEMY-1:0], n_EnemyBulletState[MAX_ENEMY-1:0];
+    reg                             c_EnemyBulletFlag,                 n_EnemyBulletFlag;
     
-    reg [18:0]                  c_EnemyPosition         [MAX_ENEMY-1:0],            n_EnemyPosition         [MAX_ENEMY-1:0];
-    reg [18:0]                  c_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0],     n_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+    reg [18:0]          c_EnemyPosition         [MAX_ENEMY-1:0],                            n_EnemyPosition         [MAX_ENEMY-1:0];
+    reg [18:0]          c_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0],  n_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
 
     reg                         c_PlayerState,          n_PlayerState;
     reg [MAX_PLAYER_BULLET-1:0] c_PlayerBulletState,    n_PlayerBulletState;
-    reg [3:0]                   c_PlayerBulletCnt,      n_PlayerBulletCnt;      // 몇번째 총알 쏠 차례인지 (0 ~ 15)
-    reg [3:0]                   c_PlayerShootCoolDown,  n_PlayerShootCoolDown;  // 쏜지 몇 Tick 지났는지  (0 ~ 11)
-    reg                         c_PlayerShootPushed,    n_PlayerShootPushed;
 
-    reg [18:0]                  c_PlayerPosition,       n_PlayerPosition;
-    reg [18:0]                  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+    reg [3:0]           c_PlayerBulletCnt,      n_PlayerBulletCnt;      // ??? ?? ? ???? (0 ~ 15)
+    reg [3:0]           c_PlayerShootCoolDown,  n_PlayerShootCoolDown;  // ?? ? Tick ????  (0 ~ 11)
+    reg                 c_PlayerShootPushed,    n_PlayerShootPushed;
 
-    reg [1:0]                   c_Phase,        n_Phase;
-    reg [6:0]                   c_PhaseCnt,     n_PhaseCnt;
+    reg [18:0]          c_PlayerPosition,       n_PlayerPosition;
+    reg [18:0]          c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+
+
+    reg [1:0]           c_Phase,        n_Phase;
+    reg [6:0]           c_PhaseCnt,     n_PhaseCnt;
 
     // wire
-    wire fNextPhase;
-    wire fEnemyShootFirst, fEnemyShootSecond;
+    wire fEnemyShoot;
+    wire [MAX_ENEMY_BULLET_SET-1:0] fEnemyBulletOutOfBound [MAX_ENEMY-1:0];
+    wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletOutOfBound;
+
     wire fPlayerCanShoot, fPlayerShoot;
-    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletLst;
-    wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletLst;
+
+    wire fNextPhase;
 
     // assign
-    assign fNextPhase = &c_PhaseCnt;
-    assign fEnemyShootFirst  = fNextPhase & c_EnemyBulletFlag;
-    assign fEnemyShootSecond = fNextPhase & ~c_EnemyBulletFlag;
+    assign fNextPhase   = &c_PhaseCnt;
+    assign fEnemyShoot  = fNextPhase;
+
     assign fPlayerCanShoot = ~(|c_PlayerShootCoolDown);
     assign fPlayerShoot = fPlayerCanShoot & c_PlayerShootPushed;
 
-    for (t = 0; t < MAX_ENEMY_BULLET - 1; t = t + 1) begin
-        assign fEnemyBulletLst[t] = c_EnemyBulletPosition[t][8:0] == VERTICAL_BORDER;
+    
+    for (x = 0; x < MAX_ENEMY; x = x + 1) begin
+      for (y = 0; y < MAX_ENEMY_BULLET_SET; y = y + 1) begin
+        assign fEnemyBulletOutOfBound[x][y] = c_EnemyBulletPosition[x][y][8:0] == VERTICAL_BORDER;
+      end
     end
 
-    for (t = 0; t < MAX_PLAYER_BULLET - 1; t = t + 1) begin
-        assign fPlayerBulletLst[t] = ~(|c_EnemyBulletPosition[t][8:0]);
+    for (p = 0; p < MAX_PLAYER_BULLET; p = p + 1) begin
+        assign fPlayerBulletOutOfBound[p] = ~(|c_PlayerBulletPosition[p][8:0]);
     end
+
+    // ########################################################
+    // Temporary
+    wire [9:0] EnemyPosition_X [MAX_ENEMY-1:0];
+    wire [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
+    
+    for (t = 0; t < MAX_ENEMY; t = t + 1) begin
+      assign EnemyPosition_X[t] = c_EnemyPosition[t][18:9];
+      assign EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
+    end
+    
+    wire [9:0] PlayerPosition_X;
+    wire [8:0] PlayerPosition_Y;
+    
+    assign PlayerPosition_X = c_PlayerPosition[18:9];
+    assign PlayerPosition_Y = c_PlayerPosition[ 8:0];
+    
+    wire [8:0] PlayerBulletPosition_Y;
+    
+    assign PlayerBulletPosition_Y = c_PlayerBulletPosition[0][ 8:0];
+
+    // ########################################################
 
 
     always @(posedge i_Clk, negedge i_Rst) begin
         if (~i_Rst) begin
             c_EnemyState            = 15'b111_1111_1111_1111;
-            c_EnemyBulletState      = 31'b000_0000_0000_0000_0000_0000_0000_0000;
             c_EnemyBulletFlag       = 1'b0;
 
-            for (i = 0; i < 3; i = i + 1) begin
-                for (j = 0; j < 5; j = j + 1) begin
-                    c_EnemyPosition[5 * i + j] = {ENEMY_CENTER_X + (j - 2) * ENEMY_GAP_X, ENEMY_CENTER_Y + (i - 1) * ENEMY_GAP_Y};
-                end
+            for (i = 0; i < MAX_ENEMY_COL; i = i + 1) begin
+              for (j = 0; j < MAX_ENEMY_ROW; j = j + 1) begin
+                c_EnemyPosition[MAX_ENEMY_ROW * i + j][18:9] = ENEMY_CENTER_X + (j - (MAX_ENEMY_ROW - 1) / 2) * ENEMY_GAP_X;
+                c_EnemyPosition[MAX_ENEMY_ROW * i + j][ 8:0] = ENEMY_CENTER_Y + (i - (MAX_ENEMY_COL - 1) / 2) * ENEMY_GAP_Y;
+              end
+            end
+            
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
+                c_EnemyBulletState[i][j] = 0;
+              end
             end
 
-            for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-                c_EnemyBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
+                c_EnemyBulletPosition[i][j] = NONE;
+              end
+            end
+
+            for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                c_PlayerBulletPosition[i] = NONE;
             end
 
             c_PlayerState           = 1'b1;
@@ -92,28 +139,45 @@ module Bullet_Gen_And_Move (
             c_PlayerShootCoolDown   = 0;
             c_PlayerShootPushed     = 0;
 
-            c_PlayerPosition        = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
-
-            for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                c_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
-            end
+            c_PlayerPosition[18:9]  = PLAYER_CENTER_X;
+            c_PlayerPosition[ 8:0]  = PLAYER_CENTER_Y;
 
             c_Phase                 = 2'b00;
             c_PhaseCnt              = 7'b000_0000;
 
         end else begin
             c_EnemyState            = n_EnemyState;
-            c_EnemyBulletState      = n_EnemyBulletState;
+            c_EnemyBulletFlag       = n_EnemyBulletFlag;
+            
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              c_EnemyPosition[i] = n_EnemyPosition[i];
+            end
+            
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
+                c_EnemyBulletState[i][j] = n_EnemyBulletState[i][j];
+              end
+            end
+            
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
+                c_EnemyBulletPosition[i][j] = n_EnemyBulletPosition[i][j];
+              end
+            end
+
             c_PlayerState           = n_PlayerState;
             c_PlayerBulletState     = n_PlayerBulletState;
+
             c_PlayerBulletCnt       = n_PlayerBulletCnt;
             c_PlayerShootCoolDown   = n_PlayerShootCoolDown;
             c_PlayerShootPushed     = n_PlayerShootPushed;
             
-            c_EnemyPosition         = n_EnemyPosition;
-            c_EnemyBulletPosition   = n_EnemyBulletPosition;
             c_PlayerPosition        = n_PlayerPosition;
-            c_PlayerBulletPosition  = n_PlayerBulletPosition;
+
+            for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                c_PlayerBulletPosition[i] = n_PlayerBulletPosition[i];
+            end
+
             c_Phase                 = n_Phase;
             c_PhaseCnt              = n_PhaseCnt;
         end
@@ -122,41 +186,47 @@ module Bullet_Gen_And_Move (
     always @* begin
         n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
         n_PhaseCnt              = c_PhaseCnt + 1;
-
         n_EnemyState            = c_EnemyState;
+        n_EnemyBulletFlag       = fEnemyShoot ? !c_EnemyBulletFlag : c_EnemyBulletFlag;
+
         n_PlayerState           = c_PlayerState;
-        n_EnemyPosition         = c_EnemyPosition;
         n_PlayerPosition        = c_PlayerPosition;
 
-        n_PlayerShootCoolDown   = fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? c_PlayerShootCoolDown - 1 : c_PlayerShootCoolDown};
+        n_PlayerShootCoolDown   = fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? 0 : c_PlayerShootCoolDown - 1};
+        n_PlayerShootPushed     = fPlayerShoot ? 0 : c_PlayerShootPushed | ~i_Btn;
         n_PlayerBulletCnt       = fPlayerShoot ? c_PlayerBulletCnt + 1 : c_PlayerBulletCnt;
-        n_EnemyBulletFlag       = fEnemyShoot ? ~c_EnemyBulletFlag : c_EnemyBulletFlag;
+        
+        for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+          n_EnemyPosition[i] = c_EnemyPosition[i];
+        end
 
         // Enemy Bullet State
-        for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            n_EnemyBulletState[i] = (i < MAX_ENEMY_BULLET / 2 ? fEnemyShootFirst : fEnemyShootSecond) ?
-                1 : c_EnemyBulletState[i] & ~fEnemyBulletLst[i];
+        for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+          for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin  
+            n_EnemyBulletState[i][j] = (j == c_EnemyBulletFlag & fEnemyShoot) ?
+              1 : c_EnemyBulletState[i][j] & ~fEnemyBulletOutOfBound[i][j];
+          end
         end
 
         // Enemy Bullet Position
-        for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            n_EnemyBulletPosition[i] = (i < MAX_ENEMY_BULLET / 2 ? fEnemyShootFirst : fEnemyShootSecond) ? 
-                c_EnemyPosition[i] : {c_EnemyBulletState[i] ? 
-                    c_EnemyBUlletPosition[i] + 1 : DEAD_POSITION};
+        for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+          for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin 
+            n_EnemyBulletPosition[i][j] = (j == c_EnemyBulletFlag & fEnemyShoot) ? 
+              c_EnemyPosition[i] : { c_EnemyBulletState[i][j] ? c_EnemyBulletPosition[i][j] + ENEMY_BULLET_SPEED : NONE };
+          end
         end
 
         // Player Bullet State
         for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-            n_PlayerBulletState[i] = fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : {
-                c_PlayerBulletState[i] & ~fPlayerBulletLst[i];
-            }
+            n_PlayerBulletState[i] = fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : { c_PlayerBulletState[i] & ~fPlayerBulletOutOfBound[i] };
         end
-        
+
+        // Player Bullet Position
         for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
             n_PlayerBulletPosition[i] = fPlayerShoot & (i == c_PlayerBulletCnt) ? 
-                c_PlayerPosition[i] : {c_PlayerBulletState[i] ? 
-                    c_PlayerBulletState[i] & ~fPlayerBulletLst[i] : DEAD_POSITION};
+              c_PlayerPosition : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE };
         end
     end
 
 endmodule
+
