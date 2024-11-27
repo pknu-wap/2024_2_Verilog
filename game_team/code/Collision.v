@@ -1,126 +1,185 @@
-// 작업 중
-module Collision
-    #(
-        parameter MAX_ENEMY         = 4'd15, 
-        parameter MAX_ENEMY_BULLET  = 4'd31, 
-        parameter MAX_PLAYER_BULLET = 4'd15, 
+'include "./Parameter.v"
 
-        parameter ENEMY_WIDTH       = 10'd36, 
-        parameter ENEMY_HEIGHT      = 9'd24, 
-        parameter PLAYER_WIDTH      = 10'd24, 
-        parameter PLAYER_HEIGHT     = 9'd36, 
-        parameter BULLET_WIDTH      = 10'd4, 
-        parameter BULLET_HEIGHT     = 9'd16, 
+module Collision 
 
-        parameter NONE              = {19{1'b1}}
-    ) (
-        input   [MAX_ENEMY-1:0]         i_EnemyState, 
-        input   [MAX_ENEMY_BULLET-1:0]  i_EnemyBulletState, 
-        input                           i_PlayerState, 
-        input   [MAX_PLAYER_BULLET-1:0] i_PlayerBulletState, 
-        input   [18:0]                 	i_EnemyPosition         [MAX_ENEMY-1:0], 
-        input   [18:0]                	i_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], 
-        input   [9:0]                   i_PlayerPosition, 
-        input   [18:0]                  i_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0], 
+    genvar i, j, k, l, m, n, o, p, q, r, s;
 
-        output  [MAX_ENEMY-1:0]         o_EnemyState, 
-        output  [MAX_ENEMY_BULLET-1:0]  o_EnemyBulletState, 
-        output                          o_PlayerState, 
-        output  [MAX_PLAYER_BULLET-1:0] o_PlayerBulletState, 
-        output  [18:0]                  o_EnemyPosition         [MAX_ENEMY-1:0], 
-        output  [18:0]                  o_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], 
-        output  [9:0]                   o_PlayerPosition, 
-        output  [18:0]                  o_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0]
-    );
+    reg     [MAX_ENEMY-1:0]         i_EnemyState;
+    reg     [MAX_ENEMY_BULLET-1:0]  i_EnemyBulletState;
+    reg                             i_PlayerState;
+    reg     [MAX_PLAYER_BULLET-1:0] i_PlayerBulletState;
+    reg     [18:0]                 	i_EnemyPosition         [MAX_ENEMY-1:0];
+    reg     [18:0]                	i_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+    reg     [9:0]                   i_PlayerPosition;
+    reg     [18:0]                  i_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
-    integer i, j;
+    reg     [MAX_ENEMY-1:0]         o_EnemyState;
+    reg     [MAX_ENEMY_BULLET-1:0]  o_EnemyBulletState;
+    reg                             o_PlayerState;
+    reg     [MAX_PLAYER_BULLET-1:0] o_PlayerBulletState;
+    reg     [18:0]                  o_EnemyPosition         [MAX_ENEMY-1:0];
+    reg     [18:0]                  o_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+    reg     [9:0]                   o_PlayerPosition;
+    reg     [18:0]                  o_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
-    // reg [MAX_ENEMY-1:0]          i_EnemyState, 
-    // reg [MAX_ENEMY_BULLET-1:0]   i_EnemyBulletState, 
-    // reg                          i_PlayerState, 
-    // reg [MAX_PLAYER_BULLET-1:0]  i_PlayerBulletState, 
-    // reg [18:0]                   i_EnemyPosition         [MAX_ENEMY-1:0], 
-    // reg [18:0]                   i_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], 
-    // reg [9:0]                    i_PlayerPosition, 
-    // reg [18:0]                   i_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0]
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Border;
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY_BULLET-1:0];
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Player;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletCollision;
 
-    reg [MAX_ENEMY_BULLET-1:0]  temp0_EnemyBulletState;
-    reg [MAX_PLAYER_BULLET-1:0] temp0_PlayerBulletState;
-    reg [18:0]                  temp0_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
-    reg [18:0]                  temp0_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_Border;
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayerBullet_VS_EnemyBullet_Each   [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_EnemyBullet;
+    wire    [MAX_ENEMY-1:0]         fPlayerBullet_VS_Enemy_Each         [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_Enemy;
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBulletCollision;
 
-    reg [MAX_ENEMY-1:0]         temp1_EnemyState;
-    reg [MAX_PLAYER_BULLET-1:0] temp1_PlayerBulletState;
-    reg [18:0]                  temp1_EnemyPosition   [MAX_ENEMY-1:0];
-    reg [18:0]                  temp1_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemy_VS_PlayerBullet_Each         [MAX_ENEMY-1:0];
+    wire    [MAX_ENEMY-1:0]         fEnemy_VS_PlayerBullet;
+    wire    [MAX_ENEMY-1:0]         fEnemyCollision;
 
-    reg horizontalCollision, verticalCollision;
-    reg acb_X, adb_X, acb_Y, adb_Y;
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayer_VS_EnemyBullet_Each;
+    wire                            fPlayer_VS_EnemyBullet;
+    wire                            fPlayerCollision;
 
-    always @* begin
-        // 적 탄 - 플레이어 탄 충돌 처리
-        temp0_EnemyBulletState = i_EnemyBulletState;
-        temp0_PlayerBulletState = i_PlayerBulletState;
-        temp0_EnemyBulletPosition = i_EnemyBulletPosition;
-        temp0_PlayerBulletPosition = i_PlayerBulletPosition;
+    function IsCollision
+        (
+            input   [18:0]  i_APosition, 
+            input   [18:0]  i_BPosition, 
+            input   [9:0]   i_AWidth, 
+            input   [8:0]   i_AHeight, 
+            input   [9:0]   i_BWidth, 
+            input   [8:0]   i_BHeight
+        );
+
+        reg         horizontalCollision;
+        reg         verticalCollision;
+        reg [9:0]   Ax1, Ax2, Bx1, Bx2;
+        reg [8:0]   Ay1, Ay2, By1, By2;
+
+        begin
+            {Ax1, Ay1}          = i_APosition;
+            {Bx1, By1}          = i_BPosition;
+            {Ax2, Ay2}          = {Ax1 + i_AWidth, Ay1 + i_AHeight};
+            {Bx2, By2}          = {Bx1 + i_BWidth, By1 + i_BHeight};
+
+            horizontalCollision = ((Ax1 <= Bx1) & (Bx1 <= Ax2)) || ((Ax1 <= Bx2) & (Bx2 <= Ax2));
+            verticalCollision   = ((Ay1 <= By1) & (By1 <= Ay2)) || ((Ay1 <= By2) & (By2 <= Ay2));
+            
+            IsCollision         = horizontalCollision & verticalCollision;
+        end
+    endfunction
+
+    // Collision
+    generate
+        // EnemyBulletCollision
         for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            if (temp0_EnemyBulletState[i]) begin
-                for (j = 0; j < MAX_PLAYER_BULLET; j = j + 1) begin: BulletCollisionLoop
-                    if (temp0_PlayerBulletState[j]) begin
-                        acb_X = (temp0_EnemyBulletPosition[i][18:9] <= temp0_PlayerBulletPosition[j][18:9]) & 
-                                (temp0_PlayerBulletPosition[j][18:9] <= temp0_EnemyBulletPosition[i][18:9] + BULLET_WIDTH);
-                        adb_X = (temp0_EnemyBulletPosition[i][18:9] <= temp0_PlayerBulletPosition[j][18:9] + BULLET_WIDTH) & 
-                                (temp0_PlayerBulletPosition[j][18:9] + BULLET_WIDTH <= temp0_EnemyBulletPosition[i][18:9] + BULLET_WIDTH);
-                        acb_Y = (temp0_EnemyBulletPosition[i][8:0] <= temp0_PlayerBulletPosition[j][8:0]) & 
-                                (temp0_PlayerBulletPosition[j][8:0] <= temp0_EnemyBulletPosition[i][8:0] + BULLET_HEIGHT);
-                        adb_Y = (temp0_EnemyBulletPosition[i][8:0] <= temp0_PlayerBulletPosition[j][8:0] + BULLET_HEIGHT) & 
-                                (temp0_PlayerBulletPosition[j][8:0] + BULLET_HEIGHT <= temp0_EnemyBulletPosition[i][8:0] + BULLET_HEIGHT);
-                        horizontalCollision = acb_X | adb_X;
-                        verticalCollision = acb_Y | adb_Y;
-                        if (horizontalCollision & verticalCollision) begin
-                            temp0_EnemyBulletState[i] = 1'b0;
-                            temp0_PlayerBulletState[j] = 1'b0;
-                            temp0_EnemyBulletPosition[i] = NONE;
-                            temp0_PlayerBulletPosition[j] = NONE;
-                            disable BulletCollisionLoop;
-                        end
-                    end
-                end
+            assign  fEnemyBullet_VS_Border[i]       = i_EnemyBulletPosition[i][8:0] == ((MONITOR_HEIGHT - 1) - BULLET_HEIGHT) ? 1'b1 : 1'b0;
+            for (j = 0; j < MAX_PLAYER_BULLET; j = j + 1) begin
+                assign  fEnemyBullet_VS_PlayerBullet_Each[i][j] = IsCollision(
+                                                                    i_EnemyBulletPosition[i], 
+                                                                    i_PlayerBulletPosition[j], 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT, 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT
+                                                                ) ? 1'b1 : 1'b0;
             end
+            assign  fEnemyBullet_VS_PlayerBullet[i] = |fEnemyBullet_VS_PlayerBullet_Each[i] ? 1'b1 : 1'b0;
+            assign  fEnemyBullet_VS_Player[i]       = IsCollision(
+                                                        i_EnemyBulletPosition[i], 
+                                                        i_PlayerPosition, 
+                                                        BULLET_WIDTH, 
+                                                        BULLET_HEIGHT, 
+                                                        PLAYER_WIDTH, 
+                                                        PLAYER_HEIGHT
+                                                    ) ? 1'b1 : 1'b0;
+            assign  fEnemyBulletCollision[i]        = fEnemyBullet_VS_Border[i] | fEnemyBullet_VS_PlayerBullet[i] | fEnemyBullet_VS_Player[i];
         end
 
-        // 적 - 플레이어 탄 충돌 처리
-        temp1_EnemyState = i_EnemyState;
-        temp1_PlayerBulletState = temp0_PlayerBulletState;
-        temp1_EnemyPosition = i_EnemyPosition;
-        temp1_PlayerBulletPosition = temp0_PlayerBulletPosition;
-        for (i = 0; i < MAX_ENEMY; i = i + 1) begin
-            if (temp1_EnemyState[i]) begin
-                for (j = 0; j < MAX_PLAYER_BULLET; j = j + 1) begin: EnemyCollisionLoop
-                    if (temp0_PlayerBulletState[j]) begin
-                        acb_X = (temp0_EnemyPosition[i][18:9] <= temp0_PlayerBulletPosition[j][18:9]) & 
-                                (temp0_PlayerBulletPosition[j][18:9] <= temp0_EnemyPosition[i][18:9] + ENEMY_WIDTH);
-                        adb_X = (temp0_EnemyPosition[i][18:9] <= temp0_PlayerBulletPosition[j][18:9] + BULLET_WIDTH) & 
-                                (temp0_PlayerBulletPosition[j][18:9] + BULLET_WIDTH <= temp0_EnemyPosition[i][18:9] + ENEMY_WIDTH);
-                        acb_Y = (temp0_EnemyPosition[i][8:0] <= temp0_PlayerBulletPosition[j][8:0]) & 
-                                (temp0_PlayerBulletPosition[j][8:0] <= temp0_EnemyPosition[i][8:0] + ENEMY_HEIGHT);
-                        adb_Y = (temp0_EnemyPosition[i][8:0] <= temp0_PlayerBulletPosition[j][8:0] + BULLET_HEIGHT) & 
-                                (temp0_PlayerBulletPosition[j][8:0] + BULLET_HEIGHT <= temp0_EnemyPosition[i][8:0] + ENEMY_HEIGHT);
-                        horizontalCollision = acb_X | adb_X;
-                        verticalCollision = acb_Y | adb_Y;
-                        if (horizontalCollision & verticalCollision) begin
-                            temp1_EnemyState[i] = 1'b0;
-                            temp1_PlayerBulletState[j] = 1'b0;
-                            temp1_EnemyPosition[i] = NONE;
-                            temp1_PlayerBulletPosition[j] = NONE;
-                            disable EnemyCollisionLoop;
-                        end
-                    end
-                end
+        // PlayerBulletCollision
+        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin
+            assign  fPlayerBullet_VS_Border[k]      = ~|i_PlayerBulletPosition[j][8:0] ? 1'b1 : 1'b0;
+            for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin
+                assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
+                                                                    i_PlayerBulletPosition[k], 
+                                                                    i_EnemyBulletPosition[l], 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT, 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT
+                                                                ) ? 1'b1 : 1'b0;
             end
+            assign  fPlayerBullet_VS_EnemyBullet[k] = |fPlayerBullet_VS_EnemyBullet_Each[k] ? 1'b1 : 1'b0;
+            for (m = 0; m < MAX_ENEMY; m = m + 1) begin
+                assign  fPlayerBullet_VS_Enemy_Each[k][m]   = IsCollision(
+                                                                i_PlayerBulletPosition[k], 
+                                                                i_EnemyPosition[m], 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT, 
+                                                                ENEMY_WIDTH, 
+                                                                ENEMY_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+            end
+            assign  fPlayerBullet_VS_Enemy[k]       = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
+            assign  fPlayerBulletCollision[k]       = fPlayerBullet_VS_Border[k] | fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
         end
 
-        // 플레이어 = 적 탄 충돌 처리
-    end
-    
+        // EnemyCollision
+        for (n = 0; n < MAX_ENEMY; n = n + 1) begin
+            for (o = 0; o < MAX_PLAYER_BULLET; o = o + 1) begin
+                assign  fEnemy_VS_PlayerBullet_Each[n][o]   = IsCollision(
+                                                                i_EnemyPosition[n], 
+                                                                i_PlayerBulletPosition[o], 
+                                                                ENEMY_WIDTH, 
+                                                                ENEMY_HEIGHT, 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+            end
+            assign  fEnemy_VS_PlayerBullet[n]       = |fEnemy_VS_PlayerBullet_Each[n] ? 1'b1 : 1'b0;
+            assign  fEnemyCollision[n]              = fEnemy_VS_PlayerBullet[n];
+        end
+
+        // PlayerCollision
+        for (p = 0; p < MAX_ENEMY_BULLET; p = p + 1) begin
+            assign  fPlayer_VS_EnemyBullet_Each[p]  = IsCollision(
+                                                        i_PlayerPosition, 
+                                                        i_EnemyBulletPosition[p], 
+                                                        PLAYER_WIDTH, 
+                                                        PLAYER_HEIGHT, 
+                                                        BULLET_WIDTH, 
+                                                        BULLET_HEIGHT
+                                                    ) ? 1'b1 : 1'b0;
+        end
+        assign  fPlayer_VS_EnemyBullet  = |fPlayer_VS_EnemyBullet_Each ? 1'b1 : 1'b0;
+        assign  fPlayerCollision        = fPlayer_VS_EnemyBullet;
+    endgenerate
+
+    // Processing
+    generate
+        // EnemyBulletProcessing
+        for (q = 0; q = MAX_ENEMY_BULLET; q = q + 1) begin
+            assign  o_EnemyBulletState[q]       = fEnemyBulletCollision[q]  ? 1'b0 : i_EnemyBulletState[q];
+            assign  o_EnemyBulletPosition[q]    = fEnemyBulletCollision[q]  ? NONE : i_EnemyBulletPosition[q];
+        end
+
+        // PlayerBulletProcessing
+        for (r = 0; r = MAX_PLAYER_BULLET; r = r + 1) begin
+            assign  o_PlayerBulletState[r]      = fPlayerBulletCollision[r] ? 1'b0 : i_PlayerBulletState[r];
+            assign  o_PlayerBulletPosition[r]   = fPlayerBulletCollision[r] ? NONE : i_PlayerBulletPosition[r];
+        end
+
+        // EnemyProcessing
+        for (s = 0; s = MAX_ENEMY; s = s + 1) begin
+            assign  o_EnemyState[s]             = fEnemyCollision[s]        ? 1'b0 : i_EnemyState[s];
+            assign  o_EnemyPosition[s]          = fEnemyCollision[s]        ? NONE : i_EnemyPosition[s];
+        end
+
+        // PlayerProcessing
+        assign  o_PlayerState                   = fPlayerCollision          ? 1'b0 : i_PlayerState;
+        assign  o_PlayerPosition                = fPlayerCollision          ? NONE : i_PlayerPosition;
+    endgenerate
+
 endmodule
