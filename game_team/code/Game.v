@@ -27,8 +27,8 @@ module Game
     reg [18:0]          c_EnemyPosition         [MAX_ENEMY-1:0],                            n_EnemyPosition         [MAX_ENEMY-1:0];
     reg [18:0]          c_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0],  n_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
 
-    reg [3:0]           c_PlayerBulletCnt,      n_PlayerBulletCnt;      // ??? ?? ? ???? (0 ~ 15)
-    reg [3:0]           c_PlayerShootCoolDown,  n_PlayerShootCoolDown;  // ?? ? Tick ????  (0 ~ 11)
+    reg [3:0]           c_PlayerBulletCnt,      n_PlayerBulletCnt;
+    reg [3:0]           c_PlayerShootCoolDown,  n_PlayerShootCoolDown;
     reg                 c_PlayerShootPushed,    n_PlayerShootPushed;
 
     reg                         c_PlayerState,          n_PlayerState;
@@ -48,10 +48,8 @@ module Game
     // ##############################################################
     // wire
     // input
-    wire fPlayerLeftMove;    
-    wire fPlayerRightMove;   
-    wire fPlayerFire;
-    wire fGameStartStop;
+    wire fPlayerLeftMove, fPlayerRightMove;   
+    wire fPlayerFire, fGameStartStop;
 
     // Bullet
     wire fEnemyShoot;
@@ -62,23 +60,29 @@ module Game
 
     // System
     wire fNextPhase;
+    wire fIdle, fInit, fPlaying, fEnding;
+    wire fVictory, fDefeat;
 
     // Debug
     // TODO : Delete Debug Data
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    wire [9:0] EnemyPosition_X [MAX_ENEMY-1:0];
-    wire [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
+    wire 
+        [9:0] EnemyPosition_X [MAX_ENEMY-1:0],
+        [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
     
     for (t = 0; t < MAX_ENEMY; t = t + 1) begin
-      assign EnemyPosition_X[t] = c_EnemyPosition[t][18:9];
-      assign EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
+      assign 
+        EnemyPosition_X[t] = c_EnemyPosition[t][18:9],
+        EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
     end
     
-    wire [9:0] PlayerPosition_X;
-    wire [8:0] PlayerPosition_Y;
+    wire 
+        [9:0] PlayerPosition_X,
+        [8:0] PlayerPosition_Y;
     
-    assign PlayerPosition_X = c_PlayerPosition[18:9];
-    assign PlayerPosition_Y = c_PlayerPosition[ 8:0];
+    assign 
+        PlayerPosition_X = c_PlayerPosition[18:9],
+        PlayerPosition_Y = c_PlayerPosition[ 8:0];
     
     wire [8:0] PlayerBulletPosition_Y;
     
@@ -88,16 +92,19 @@ module Game
     // ##############################################################
     // assign
     // input
-    assign fPlayerLeftMove         = i_Btn[0];
-    assign fPlayerRightMove        = i_Btn[1];
-    assign fPlayerFire             = ~i_PlayerBulletShoot  &  c_fPlayerShoot;   // flag가 0일 때 발사 가능
-    assign fGameStartStop          = ~i_GameStartStop      &  c_fGameStartStop;
+    assign 
+        fPlayerLeftMove         = i_Btn[0],
+        fPlayerRightMove        = i_Btn[1],
+        fPlayerFire             = ~i_PlayerBulletShoot  &  c_fPlayerShoot,
+        fGameStartStop          = ~i_GameStartStop      &  c_fGameStartStop;
 
-    assign fNextPhase   = c_PhaseCnt == MAX_PHASE_CNT;
-    assign fEnemyShoot  = fNextPhase;
+    assign 
+        fNextPhase   = c_PhaseCnt == MAX_PHASE_CNT,
+        fEnemyShoot  = fNextPhase;
 
-    assign fPlayerCanShoot = ~(|c_PlayerShootCoolDown);
-    assign fPlayerShoot = fPlayerCanShoot & c_PlayerShootPushed;
+    assign 
+        fPlayerCanShoot = ~(|c_PlayerShootCoolDown),
+        fPlayerShoot = fPlayerCanShoot & c_PlayerShootPushed;
 
     for (x = 0; x < MAX_ENEMY; x = x + 1) begin
       for (y = 0; y < MAX_ENEMY_BULLET_SET; y = y + 1) begin
@@ -108,6 +115,16 @@ module Game
     for (p = 0; p < MAX_PLAYER_BULLET; p = p + 1) begin
         assign fPlayerBulletOutOfBound[p] = ~(|c_PlayerBulletPosition[p][8:0]);
     end
+
+    assign
+        fIdle       = c_GameState == GAME_IDLE,
+        fInit       = c_GameState == GAME_INITIAL,
+        fPlaying    = c_GameState == GAME_PLAYING,
+        fEnding     = c_GameState == GAME_DEFEAT | c_GameState == GAME_VICTORY;
+
+    assign 
+        fVictory    = fPlaying & ~|c_EnemyState,
+        fDefeat     = fPlaying & ~c_PlayerState;
 
     // ##############################################################
     // 비동기 입력
@@ -211,12 +228,6 @@ module Game
         
         case (c_GameState)
             GAME_IDLE: begin
-                // TODO
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적, 적 탄, 플레이어, 플레이어 탄
-                // DONE
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적
                 if (fGameStartStop) n_GameState = GAME_INITIAL;
 
             end
@@ -242,36 +253,18 @@ module Game
                     n_PlayerBulletPosition[i] = NONE;
                 end
 
-                n_StageState            = {9{1'b0}};
+                n_StageState            = 0;
+                n_Score                 = 0;
+
                 n_GameState             = GAME_PLAYING;
-                n_Score                 = {14{1'b0}};
             end
             GAME_PLAYING: begin
-                // TODO
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적, 적 탄, 플레이어, 플레이어 탄, 충돌
-                // DONE
-                // 1. 상태를 정의: 스테이지
-                // 2. 동작을 정의: 
-
-                // 적 이동은 모듈로써 구현(generate block 참고)
-                if      (fPlayerShoot)  n_fPlayerShoot = 4'd11;
-                else if (~|c_Counter)   n_fPlayerShoot = c_fPlayerShoot;
-                else                    n_fPlayerShoot = c_fPlayerShoot - 1;
-
-                // ex
-                for (i = 0; i < 3; i = i + 1) begin
-                    for (j = 0; j < 5; j = j + 1) begin
-                        n_EnemyPosition[5 * i + j] = fTick ?  : c_EnemyPosition[5 * i + j];
-                    end
-                end
-
+                
 
 
                 if (!(&c_EnemyState))       n_GameState = GAME_VICTORY;
                 else if (!c_PlayerState)    n_GameState = GAME_DEFEAT;
                 else if (fGameStartStop)    n_GameState = GAME_IDLE;
-                else                        n_GameState = GAME_PLAYING;
             end
             GAME_VICTORY: begin
                 // TODO

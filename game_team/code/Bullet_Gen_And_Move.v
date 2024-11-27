@@ -103,8 +103,7 @@ module Bullet_Gen_And_Move (input i_Clk, i_Rst, i_Btn);
     assign PlayerBulletPosition_Y = c_PlayerBulletPosition[0][ 8:0];
 
     // ########################################################
-
-
+    
     always @(posedge i_Clk, negedge i_Rst) begin
         if (~i_Rst) begin
             c_EnemyState            = 15'b111_1111_1111_1111;
