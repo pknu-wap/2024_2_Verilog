@@ -23,33 +23,24 @@ module Game
     );
 
     integer i, j;
-    genvar  gen_i, gen_j, gen_k;
+    genvar t;
 
-    // reg c_fPlayerLeft,      n_fPlayerLeft;
-    // reg c_fPlayerRight,     n_fPlayerRight;
-    reg [3:0]   c_fPlayerShoot,     n_fPlayerShoot;     // 0부터 11까지의 값을 저장
-    reg         c_fGameStartStop,   n_fGameStartStop;
-
+    // reg
     reg [MAX_ENEMY-1:0]         c_EnemyState,           n_EnemyState;
     reg [MAX_ENEMY_BULLET-1:0]  c_EnemyBulletState,     n_EnemyBulletState;
+    reg                         c_EnemyBulletFlag,      n_EnemyBulletFlag;
+    
+    reg [18:0]                  c_EnemyPosition         [MAX_ENEMY-1:0],            n_EnemyPosition         [MAX_ENEMY-1:0];
+    reg [18:0]                  c_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0],     n_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
+
     reg                         c_PlayerState,          n_PlayerState;
     reg [MAX_PLAYER_BULLET-1:0] c_PlayerBulletState,    n_PlayerBulletState;
-    
-    reg [18:0]  c_EnemyPosition         [MAX_ENEMY-1:0],            n_EnemyPosition         [MAX_ENEMY-1:0];
-    reg [18:0]  c_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0],     n_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
-    reg [9:0]   c_PlayerPosition,                                   n_PlayerPosition;
-    reg [18:0]  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
+    reg [3:0]                   c_PlayerBulletCnt,      n_PlayerBulletCnt;      // 몇번째 총알 쏠 차례인지 (0 ~ 15)
+    reg [3:0]                   c_PlayerShootCoolDown,  n_PlayerShootCoolDown;  // 쏜지 몇 Tick 지났는지  (0 ~ 11)
+    reg                         c_PlayerShootPushed,    n_PlayerShootPushed;
 
-    reg [2:0]   c_GameState,    n_GameState;
-    reg [8:0]   c_StageState,   n_StageState;
-    reg [13:0]  c_Score,        n_Score;
-
-    reg [MAX_ENEMY_BULLET-1:0]  temp_EnemyBulletState;
-    reg [MAX_PLAYER_BULLET-1:0] temp_PlayerBulletState;
-    reg [18:0]                  temp_EnemyPosition          [MAX_ENEMY-1:0];
-    reg [9:0]                   temp_PlayerPosition;
-    reg [18:0]                  temp_EnemyBulletPosition    [MAX_ENEMY_BULLET-1:0];
-    reg [18:0]                  temp_PlayerBulletPosition   [MAX_PLAYER_BULLET-1:0];
+    reg [18:0]                  c_PlayerPosition,       n_PlayerPosition;
+    reg [18:0]                  c_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0],    n_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
     // wire fPlayerLeft;    // 필요 없음, playerLeft 그대로 받으면 됨
     // wire fPlayerRight;   // 필요 없음, playerRight 그대로 받으면 됨
@@ -126,8 +117,7 @@ module Game
 
             c_EnemyState            = 15'b111_1111_1111_1111;
             c_EnemyBulletState      = 31'b000_0000_0000_0000_0000_0000_0000_0000;
-            c_PlayerState           = 1'b1;
-            c_PlayerBulletState     = 15'b000_0000_0000_0000;
+            c_EnemyBulletFlag       = 1'b0;
 
             for (i = 0; i < 3; i = i + 1) begin
                 for (j = 0; j < 5; j = j + 1) begin
@@ -136,37 +126,50 @@ module Game
             end
 
             for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-                c_EnemyBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+                c_EnemyBulletPosition[i] = DEAD_POSITION;
             end
 
-            c_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
+            c_PlayerState           = 1'b1;
+            c_PlayerBulletState     = 15'b000_0000_0000_0000;
+            c_PlayerBulletCnt       = 4'b0000;
+            c_PlayerShootCoolDown   = 0;
+            c_PlayerShootPushed     = 0;
+
+            c_PlayerPosition        = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
 
             for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                c_PlayerBulletPosition[i] = 19'b111_1111_1111_1111_1111;
+                c_PlayerBulletPosition[i] = DEAD_POSITION;
             end
 
-            c_GameState             = GAME_IDLE;
-            c_StageState            = 9'b00_0000000;
-            c_Score                 = 14'b00_0000_0000_0000;
-        end else begin
-            // c_fPlayerLeft           = n_fPlayerLeft;
-            // c_fPlayerRight          = n_fPlayerRight;
-            c_fPlayerShoot          = n_fPlayerShoot;
-            c_fGameStartStop        = n_fGameStartStop;
+            c_Phase                 = 2'b00;
+            c_PhaseCnt              = 7'b000_0000;
 
+        end else begin
             c_EnemyState            = n_EnemyState;
             c_EnemyBulletState      = n_EnemyBulletState;
             c_PlayerState           = n_PlayerState;
             c_PlayerBulletState     = n_PlayerBulletState;
+            c_PlayerBulletCnt       = n_PlayerBulletCnt;
+            c_PlayerShootCoolDown   = n_PlayerShootCoolDown;
+            c_PlayerShootPushed     = n_PlayerShootPushed;
             
-            c_EnemyPosition         = n_EnemyPosition;
-            c_EnemyBulletPosition   = n_EnemyBulletPosition;
-            c_PlayerPosition        = n_PlayerPosition;
-            c_PlayerBulletPosition  = n_PlayerBulletPosition;
+            for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+              c_EnemyPosition[i] = n_EnemyPosition[i];
+            end
+            
+            for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
+              c_EnemyBulletPosition[i] = n_EnemyBulletPosition[i];
+            end
 
-            c_GameState             = n_GameState;
-            c_StageState            = n_StageState;
-            c_Score                 = n_Score;
+
+            c_PlayerPosition        = n_PlayerPosition;
+            
+            for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+              c_PlayerBulletPosition[i] = n_PlayerBulletPosition[i];
+            end
+            
+            c_Phase                 = n_Phase;
+            c_PhaseCnt              = n_PhaseCnt;
         end
     end
 
@@ -300,3 +303,4 @@ module Game
     end
 
 endmodule
+
