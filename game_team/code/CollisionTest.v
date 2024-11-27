@@ -1,6 +1,6 @@
 // 'include "./Parameter.v"
 
-module Collision
+module CollisionTest
     # ( 
         // Parameter
         parameter MAX_ENEMY         = 4'd3, 
@@ -66,13 +66,11 @@ module Collision
     reg     [9:0]                   o_PlayerPosition;
     reg     [18:0]                  o_PlayerBulletPosition  [MAX_PLAYER_BULLET-1:0];
 
-    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Border;
     wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY_BULLET-1:0];
     wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet;
     wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Player;
     wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletCollision;
 
-    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_Border;
     wire    [MAX_ENEMY_BULLET-1:0]  fPlayerBullet_VS_EnemyBullet_Each   [MAX_PLAYER_BULLET-1:0];
     wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_EnemyBullet;
     wire    [MAX_ENEMY-1:0]         fPlayerBullet_VS_Enemy_Each         [MAX_PLAYER_BULLET-1:0];
@@ -108,8 +106,8 @@ module Collision
             {Ax2, Ay2}          = {Ax1 + i_AWidth, Ay1 + i_AHeight};
             {Bx2, By2}          = {Bx1 + i_BWidth, By1 + i_BHeight};
 
-            horizontalCollision = ((Ax1 <= Bx1) & (Bx1 <= Ax2)) || ((Ax1 <= Bx2) & (Bx2 <= Ax2));
-            verticalCollision   = ((Ay1 <= By1) & (By1 <= Ay2)) || ((Ay1 <= By2) & (By2 <= Ay2));
+            horizontalCollision = ~((Ax2 <= Bx1) | (Ax1 >= Bx2));
+            verticalCollision   = ~((Ay2 <= By1) | (Ay1 >= By2));
             
             IsCollision         = horizontalCollision & verticalCollision;
         end
@@ -119,7 +117,6 @@ module Collision
     generate
         // EnemyBulletCollision
         for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
-            assign  fEnemyBullet_VS_Border[i]       = (i_EnemyBulletPosition[i][8:0] > (MONITOR_HEIGHT - BULLET_HEIGHT)) ? 1'b1 : 1'b0;
             for (j = 0; j < MAX_PLAYER_BULLET; j = j + 1) begin
                 assign  fEnemyBullet_VS_PlayerBullet_Each[i][j] = IsCollision(
                                                                     i_EnemyBulletPosition[i], 
@@ -139,12 +136,11 @@ module Collision
                                                         PLAYER_WIDTH, 
                                                         PLAYER_HEIGHT
                                                     ) ? 1'b1 : 1'b0;
-            assign  fEnemyBulletCollision[i]        = fEnemyBullet_VS_Border[i] | fEnemyBullet_VS_PlayerBullet[i] | fEnemyBullet_VS_Player[i];
+            assign  fEnemyBulletCollision[i]        = fEnemyBullet_VS_PlayerBullet[i] | fEnemyBullet_VS_Player[i];
         end
 
         // PlayerBulletCollision
         for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin
-            assign  fPlayerBullet_VS_Border[k]      = ~|i_PlayerBulletPosition[k][8:2] ? 1'b1 : 1'b0;
             for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin
                 assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
                                                                     i_PlayerBulletPosition[k], 
@@ -167,7 +163,7 @@ module Collision
                                                             ) ? 1'b1 : 1'b0;
             end
             assign  fPlayerBullet_VS_Enemy[k]       = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
-            assign  fPlayerBulletCollision[k]       = fPlayerBullet_VS_Border[k] | fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
+            assign  fPlayerBulletCollision[k]       = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
         end
 
         // EnemyCollision
@@ -202,7 +198,6 @@ module Collision
     endgenerate
 
     // Processing
-
     always @(posedge i_Clk, negedge i_Rst) begin
         if (~i_Rst) begin
             i_EnemyBulletState[0] = 1'b1;
