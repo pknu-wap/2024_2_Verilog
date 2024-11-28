@@ -2,7 +2,6 @@
 ![VALAGA](https://github.com/user-attachments/assets/d5f2dd99-bbe4-4bc5-9880-9646f3e09e16)
 >Verilog + Galaga
 
-
 FPGA 기반 Galaga 스타일 게임 모듈 구현
 
 # 팀원소개
@@ -14,3 +13,16 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 # 개발일정
 ![개발일정](https://github.com/user-attachments/assets/9734bc31-8119-4341-a92c-9b18bec2dd7d)
 
+# 스터디
+
+## 스터디 브랜치 소개
+스터디 내용은 [스터디 브랜치](https://github.com/pknu-wap/2024_2_Verilog/tree/Study)에 기록되어 있습니다.
+학습한 내용, 실행 코드 등을 참고해주세요.
+
+### 스터디 내용
+- 1주차 : Verilog 기초
+Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 공부
+- 2주차 : Counter 설계
+과제 - Counter 기능추가 해보기 (자유롭게)
+- 3주차 : StopWatch 설계
+과제 - StopWatch 기록기능 추가하기
