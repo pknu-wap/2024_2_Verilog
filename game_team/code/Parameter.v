@@ -38,6 +38,13 @@ module Parameter
         parameter GAME_DEFEAT       = 3'b011;
         parameter GAME_ERROR        = 3'b100;
 
+        parameter ONPLAY_DRAW       = 3'b000;
+        parameter ONPLAY_MOVE       = 3'b001;
+        parameter ONPLAY_COLLISION  = 3'b010;
+        parameter ONPLAY_CALCVALUE  = 3'b011;
+        parameter ONPLAY_CHECKING   = 3'b100;
+        parameter ONPLAY_WAITING    = 3'b101;
+
         parameter PHASE_1           = 2'b00;
         parameter PHASE_2	        = 2'b01;
         parameter PHASE_3	        = 2'b10;
