@@ -26,7 +26,7 @@ parameter BULLET_HEIGHT     = 9'd16;
 
 parameter MAX_PLAYER_BULLET     = 4'd15;
 parameter MAX_ENEMY_BULLET_SET  = 2;
-parameter MAX_ENEMY_BULLET      = 4'd31;
+parameter MAX_ENEMY_BULLET      = 4'd30;
 
 parameter ENEMY_BULLET_SPEED    = 2;
 parameter PLAYER_BULLET_SPEED   = 4;
@@ -70,5 +70,5 @@ parameter CENTER_Y	        = 108;
 
 
 // etc
-parameter NONE              = {10'd720, 9'd500};    //  updated, 소멸된 개체는 여백의 중앙에 위치
+parameter NONE              = {10'd720, 9'd500};    //  updated, 뚮㈇媛쒖껜щ갚以묒븰꾩튂
 parameter VERTICAL_BORDER   = 464;

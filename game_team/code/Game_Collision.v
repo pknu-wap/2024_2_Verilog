@@ -31,13 +31,13 @@ module Game_Collision;
         for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin: EnemyBulletCollision
             for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin: EnemyBulletCollision_VS_PlayerBullet
                 assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
-                                                                    c_EnemyBulletPosition[ii], 
-                                                                    c_PlayerBulletPosition[jj], 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT, 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT
-                                                                ) ? 1'b1 : 1'b0;
+                                                                        c_EnemyBulletPosition[ii], 
+                                                                        c_PlayerBulletPosition[jj], 
+                                                                        BULLET_WIDTH, 
+                                                                        BULLET_HEIGHT, 
+                                                                        BULLET_WIDTH, 
+                                                                        BULLET_HEIGHT
+                                                                    ) ? 1'b1 : 1'b0;
             end
             assign  fEnemyBullet_VS_PlayerBullet[ii]    = |fEnemyBullet_VS_PlayerBullet_Each[ii] ? 1'b1 : 1'b0;
             assign  fEnemyBullet_VS_Player[ii]          = IsCollision(
