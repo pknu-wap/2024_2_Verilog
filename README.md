@@ -1,4 +1,4 @@
-# 🎮VALAGA
+# :video_game: VALAGA
 >Verilog + Galaga
 
 ![VALAGA](https://github.com/user-attachments/assets/d5f2dd99-bbe4-4bc5-9880-9646f3e09e16)
