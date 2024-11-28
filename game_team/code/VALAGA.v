@@ -1,4 +1,4 @@
-module Game 
+module VALAGA 
     (
         input   i_Clk, i_Rst,
         input  [3:0] i_Btn,
@@ -11,7 +11,7 @@ module Game
     `include "Parameter.vh" 
   
     integer i, j;
-    genvar x, y, t, e, gen_i, gen_j, gen_k;
+    genvar x, y, t, e, gen_i, gen_j, gen_k, gen_x, gen_y, gen_z;
     
     ClkDiv  clk25m(i_Clk, o_Clk);
 
@@ -20,15 +20,15 @@ module Game
     // input
     reg c_fPlayerShoot,     n_fPlayerShoot;     
     reg c_fGameStartStop,   n_fGameStartStop;
-
+    
     // Entity
     reg [MAX_ENEMY-1:0]             c_EnemyState,                      n_EnemyState;
     reg [MAX_ENEMY_BULLET_SET-1:0]  c_EnemyBulletState[MAX_ENEMY-1:0], n_EnemyBulletState[MAX_ENEMY-1:0];
     reg                             c_EnemyBulletFlag,                 n_EnemyBulletFlag;
-
+                
     reg [18:0]  c_EnemyPosition         [MAX_ENEMY-1:0],                            n_EnemyPosition         [MAX_ENEMY-1:0];
     reg [18:0]  c_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0],  n_EnemyBulletPosition   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
-
+                
     reg [3:0]   c_PlayerBulletCnt,      n_PlayerBulletCnt;
     reg [3:0]   c_PlayerShootCoolDown,  n_PlayerShootCoolDown;
     reg         c_PlayerShootPushed,    n_PlayerShootPushed;
@@ -45,7 +45,6 @@ module Game
     reg [3:0]   c_OnPlayCnt,    n_OnPlayCnt;
     reg [1:0]   c_Phase,        n_Phase;
     reg [6:0]   c_PhaseCnt,     n_PhaseCnt;
-    reg [9:0]   c_Score,        n_Score;
 
     // Display
     reg [9:0]   c_PixelPos_X, n_PixelPos_X;
@@ -84,7 +83,7 @@ module Game
 
     wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletPixel_Each;
     wire [MAX_ENEMY-1:0]            fEnemyPixel_Each;
-    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletPixel_Each;
+    wire [MAX_ENEMY_BULLET_SET-1:0] fEnemyBulletPixel_Each [MAX_ENEMY-1:0];
 
     // ##############################################################
     // function
@@ -107,10 +106,10 @@ module Game
     // ##############################################################
     // assign
     assign 
-        fPlayerLeftMove         = i_Btn[0],
-        fPlayerRightMove        = i_Btn[1],
-        fPlayerFire             = ~i_Btn[3] & c_fPlayerShoot,
-        fGameStartStop          = ~i_Btn[2] & c_fGameStartStop;
+        fPlayerLeftMove         = ~i_Btn[3],
+        fPlayerRightMove        = ~i_Btn[2],
+        fPlayerFire             = ~i_Btn[1] & c_fPlayerShoot,
+        fGameStartStop          = ~i_Btn[0] & c_fGameStartStop;
 
     // Player
     assign fPlayerLeftTouch = ~|c_PlayerPosition;
@@ -122,15 +121,19 @@ module Game
 
     // Bullet
     assign fEnemyShoot  = fLstPhaseCnt & fOnPlayCollision | fLstPhaseCnt & fOnPlayMove;
+	 
+    generate
+        for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin :EnemyBulletBoundCheck
+            assign fEnemyBulletOutOfBound[x][0] = c_EnemyBulletPosition[x][0][8:0] == VERTICAL_BORDER;
+            assign fEnemyBulletOutOfBound[x][1] = c_EnemyBulletPosition[x][1][8:0] == VERTICAL_BORDER;
+        end
+    endgenerate
 
-    for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin
-        assign fEnemyBulletOutOfBound[x][0] = c_EnemyBulletPosition[x][0][8:0] == VERTICAL_BORDER;
-        assign fEnemyBulletOutOfBound[x][1] = c_EnemyBulletPosition[x][1][8:0] == VERTICAL_BORDER;
-    end
-
-    for (e = 0; e < MAX_PLAYER_BULLET; e = e + 1) begin
-        assign fPlayerBulletOutOfBound[e] = ~(|c_PlayerBulletPosition[e][8:0]);
-    end
+    generate
+        for (e = 0; e < MAX_PLAYER_BULLET; e = e + 1) begin :PlayerBulletBoundCheck
+            assign fPlayerBulletOutOfBound[e] = ~(|c_PlayerBulletPosition[e][8:0]);
+        end
+    endgenerate
 
     assign 
         fPlayerCanShoot = ~(|c_PlayerShootCoolDown),
@@ -177,40 +180,73 @@ module Game
                         fEnemyBulletPixel    ? 3'b100 :
                         fEnemyPixel          ? 3'b011 : 3'b000;
     
-    assign fPlayerPixel = is_in_range(c_PlayerPosition[18:9], {1'b0, c_PlayerPosition[8:0]}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_x, c_PixelPos_y);
-    for (gen_i = 0; gen_i < MAX_PLAYER_BULLET; gen_i = gen_i + 1) begin
-        assign fPlayerBulletPixel_Each[gen_i]   = is_in_range(
-                                                    c_PlayerBulletPosition[gen_i][18:9], 
-                                                    {1'b0, c_PlayerBulletPosition[gen_i][8:0]},
-                                                    PLAYER_BULLET_WIDTH, 
-                                                    {1'b0, PLAYER_BULLET_HEIGHT}, 
-                                                    c_PixelPos_x, 
-                                                    c_PixelPos_y
-                                                );
-    end
+    // Object Detection
+    assign fPlayerPixel = is_in_range(PlayerPosition_X, {1'b0, PlayerPosition_Y}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_X, c_PixelPos_Y);
+
+    generate
+        for (gen_i = 0; gen_i < MAX_PLAYER_BULLET; gen_i = gen_i + 1) begin :PlayerBulletObjectDetection
+            assign fPlayerBulletPixel_Each[gen_i]   = is_in_range(
+                                                        c_PlayerBulletPosition[gen_i][18:9], 
+                                                        {1'b0, c_PlayerBulletPosition[gen_i][8:0]},
+                                                        BULLET_WIDTH, 
+                                                        {1'b0, BULLET_HEIGHT}, 
+                                                        c_PixelPos_X, 
+                                                        c_PixelPos_Y
+                                                    );
+        end
+    endgenerate
     assign fPlayerBulletPixel   = |fPlayerBulletPixel_Each;
-    for (gen_j = 0; gen_j < MAX_ENEMY; gen_j = gen_j + 1) begin
-        assign fEnemyPixel_Each[gen_j]          = is_in_range(
-                                                    c_EnemyPosition[gen_j][18:9], 
-                                                    {1'b0, c_EnemyPosition[gen_j][8:0]}, 
-                                                    ENEMY_WIDTH, 
-                                                    {1'b0, ENEMY_HEIGHT}, 
-                                                    c_PixelPos_x, 
-                                                    c_PixelPos_y
-                                                );
-    end
+
+    generate
+        for (gen_j = 0; gen_j < MAX_ENEMY; gen_j = gen_j + 1) begin :EnemyObjectDetection
+            assign fEnemyPixel_Each[gen_j]          = is_in_range(
+                                                        c_EnemyPosition[gen_j][18:9], 
+                                                        {1'b0, c_EnemyPosition[gen_j][8:0]}, 
+                                                        ENEMY_WIDTH, 
+                                                        {1'b0, ENEMY_HEIGHT}, 
+                                                        c_PixelPos_X, 
+                                                        c_PixelPos_Y
+                                                    );
+        end
+    endgenerate
     assign fEnemyPixel          = |fEnemyPixel_Each;
-    for (gen_k = 0; gen_k < MAX_ENEMY_BULLET; gen_k = gen_k + 1) begin
-        assign fEnemyBulletPixel_Each[gen_k]    = is_in_range(
-                                                    c_EnemyBulletPosition[gen_k][18:9], 
-                                                    {1'b0, c_EnemyBulletPosition[gen_k][8:0]}, 
-                                                    ENEMY_BULLET_WIDTH, 
-                                                    {1'b0, ENEMY_BULLET_HEIGHT}, 
-                                                    c_PixelPos_x, 
-                                                    c_PixelPos_y
-                                                );
-    end
-    assign fEnemyBulletPixel    = |fEnemyBulletPixel_Each;
+
+    generate
+        for (gen_k = 0; gen_k < MAX_ENEMY; gen_k = gen_k + 1) begin :EnemyBulletObjectDetectionOuter
+            for (gen_x = 0; gen_x < MAX_ENEMY_BULLET_SET; gen_x = gen_x + 1) begin :EnemyBulletObjectDetectionInner
+                assign fEnemyBulletPixel_Each[gen_k][gen_x]    = is_in_range(
+                                                                    c_EnemyBulletPosition[gen_k][gen_x][18:9], 
+                                                                    {1'b0, c_EnemyBulletPosition[gen_k][gen_x][8:0]}, 
+                                                                    BULLET_WIDTH, 
+                                                                    {1'b0, BULLET_HEIGHT}, 
+                                                                    c_PixelPos_X, 
+                                                                    c_PixelPos_Y
+                                                                );
+            end
+        end
+    endgenerate
+
+    assign fEnemyBulletPixel = 
+        |fEnemyBulletPixel_Each[ 0] |
+        |fEnemyBulletPixel_Each[ 1] |
+        |fEnemyBulletPixel_Each[ 2] |
+        |fEnemyBulletPixel_Each[ 3] |
+        |fEnemyBulletPixel_Each[ 4] |
+        |fEnemyBulletPixel_Each[ 5] |
+        |fEnemyBulletPixel_Each[ 6] |
+        |fEnemyBulletPixel_Each[ 7] |
+        |fEnemyBulletPixel_Each[ 8] |
+        |fEnemyBulletPixel_Each[ 9] |
+        |fEnemyBulletPixel_Each[10] |
+        |fEnemyBulletPixel_Each[11] |
+        |fEnemyBulletPixel_Each[12] |
+        |fEnemyBulletPixel_Each[13] |
+        |fEnemyBulletPixel_Each[14];
+
+    assign
+        o_Red   = fEnemyPixel ? 8'b11111111 : 0,
+        o_Green = fPlayerBulletPixel | fEnemyBulletPixel ? 8'b11111111 : 0,
+        o_Blue  = fPlayerPixel ? 8'b11111111 : 0;
 
     // Debug
     // TODO : Delete Debug Data
@@ -218,12 +254,27 @@ module Game
     wire [9:0] EnemyPosition_X [MAX_ENEMY-1:0];
     wire [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
 
-    for (t = 0; t < MAX_ENEMY; t = t + 1) begin
-      assign 
-        EnemyPosition_X[t] = c_EnemyPosition[t][18:9],
-        EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
-    end
+    generate    
+        for (t = 0; t < MAX_ENEMY; t = t + 1) begin :EnemyPosition
+            assign 
+                EnemyPosition_X[t] = c_EnemyPosition[t][18:9],
+                EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
+        end
+    endgenerate    
     
+    wire [9:0] EnemyBulletPosition_X [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
+    wire [8:0] EnemyBulletPosition_Y [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
+
+    generate    
+        for (t = 0; t < MAX_ENEMY; t = t + 1) begin :EnemyBullet
+            assign 
+                EnemyBulletPosition_X[t][0] = c_EnemyBulletPosition[t][0][18:9],
+                EnemyBulletPosition_X[t][1] = c_EnemyBulletPosition[t][1][18:9],
+                EnemyBulletPosition_Y[t][0] = c_EnemyBulletPosition[t][0][ 8:0],
+                EnemyBulletPosition_Y[t][1] = c_EnemyBulletPosition[t][1][ 8:0];
+        end
+    endgenerate    
+
     wire [8:0] PlayerBulletPosition_Y;
     
     assign PlayerBulletPosition_Y = c_PlayerBulletPosition[0][ 8:0];
@@ -255,10 +306,13 @@ module Game
                 c_PlayerBulletPosition[i] = 0;
             end
 
+            c_PlayerShootCoolDown   = 0;
+            c_PlayerShootPushed     = 0;
+            c_PlayerBulletCnt       = 0;
+
             c_GameState             = GAME_IDLE;
             c_OnPlayState           = ONPLAY_WAITING;
             c_OnPlayCnt             = 0;
-            c_Score                 = 0;
 
             c_Phase                 = 0;
             c_PhaseCnt              = 0;
@@ -279,7 +333,7 @@ module Game
                 c_EnemyBulletState[i][j]    = n_EnemyBulletState[i][j];
               end
             end
-            
+
             c_PlayerState           = n_PlayerState;
             c_PlayerPosition        = n_PlayerPosition;
             c_PlayerBulletState     = n_PlayerBulletState;
@@ -287,10 +341,13 @@ module Game
                 c_PlayerBulletPosition[i] = n_PlayerBulletPosition[i];
             end
 
+            c_PlayerShootCoolDown   = n_PlayerShootCoolDown;
+            c_PlayerShootPushed     = n_PlayerShootPushed;
+            c_PlayerBulletCnt       = n_PlayerBulletCnt;
+
             c_GameState             = n_GameState;
             c_OnPlayState           = n_OnPlayState;
             c_OnPlayCnt             = n_OnPlayCnt;
-            c_Score                 = n_Score;
 
             c_Phase                 = n_Phase;
             c_PhaseCnt              = n_PhaseCnt;
@@ -310,8 +367,8 @@ module Game
     // ##############################################################
     // 
     always @* begin
-        n_fPlayerShoot          = i_Btn[3];
-        n_fGameStartStop        = i_Btn[2];
+        n_fPlayerShoot          = i_Btn[0];
+        n_fGameStartStop        = i_Btn[1];
 
         n_EnemyState            = c_EnemyState;
         for (i = 0; i < MAX_ENEMY; i = i + 1) begin
@@ -329,17 +386,16 @@ module Game
         n_PlayerPosition        = c_PlayerPosition;
         n_PlayerBulletState     = c_PlayerBulletState;
         for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-            c_PlayerBulletPosition[i] = n_PlayerBulletPosition[i];
+            n_PlayerBulletPosition[i] = c_PlayerBulletPosition[i];
         end
 
         n_PlayerBulletCnt       = c_PlayerBulletCnt;
-        n_PlayerShootCoolDown   = n_PlayerShootCoolDown;
+        n_PlayerShootCoolDown   = c_PlayerShootCoolDown;
         n_PlayerShootPushed     = c_PlayerShootPushed;
 
         n_GameState             = c_GameState;
         n_OnPlayState           = c_OnPlayState;
         n_OnPlayCnt             = c_OnPlayCnt;
-        n_Score                 = c_Score;
 
         n_Phase                 = c_Phase;
         n_PhaseCnt              = c_PhaseCnt;
@@ -378,7 +434,6 @@ module Game
 
                 n_OnPlayState           = ONPLAY_WAITING;
                 n_OnPlayCnt             = 0;
-                n_Score                 = 0;
 
                 n_Phase                 = PHASE_1;
                 n_PhaseCnt              = 0;
@@ -388,9 +443,9 @@ module Game
 
             GAME_PLAYING: begin
                 n_OnPlayState           =
-                    fOnPlayWaiting & fTick  ? ONPLAY_MOVE : 
-                    fOnPlayMove             ? ONPLAY_CALCVALUE :
-                    fOnPlayCalcValue        ? ONPLAY_COLLISION :
+                    fOnPlayWaiting & fTick  ? ONPLAY_CALCVALUE : 
+                    fOnPlayCalcValue        ? ONPLAY_MOVE :
+                    fOnPlayMove             ? ONPLAY_COLLISION :
                     fOnPlayCollision        ? ONPLAY_CHECKING :
                     fOnPlayChecking         ? ONPLAY_WAITING : c_OnPlayState;
 
@@ -412,8 +467,8 @@ module Game
                 end
 
                 for (i = 0; i < MAX_ENEMY; i = i + 1) begin
-                    n_EnemyBulletPosition[i][0][9:0] = fOnPlayMove ? ((!c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][0] ? c_EnemyBulletPosition[i][0][9:0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][0][9:0];
-                    n_EnemyBulletPosition[i][1][9:0] = fOnPlayMove ? (( c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][1] ? c_EnemyBulletPosition[i][1][9:0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][1][9:0];
+                    n_EnemyBulletPosition[i][0] = fOnPlayMove ? ((!c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][0] ? c_EnemyBulletPosition[i][0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][0];
+                    n_EnemyBulletPosition[i][1] = fOnPlayMove ? (( c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][1] ? c_EnemyBulletPosition[i][1] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][1];
                 end
 
                 n_PlayerPosition[18:9] = 
@@ -421,7 +476,7 @@ module Game
                     (fOnPlayMove & fPlayerRightMove & ~fPlayerRightTouch)  ? (PlayerPosition_X + PLAYER_SPEED) : PlayerPosition_X;
 
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                    n_PlayerBulletPosition[i][9:0] = fOnPlayMove ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? c_PlayerPosition : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE }) : c_PlayerBulletPosition[i][9:0];
+                    n_PlayerBulletPosition[i] = fOnPlayMove ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? c_PlayerPosition : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE }) : c_PlayerBulletPosition[i];
                 end
                 
                 // Collision Check

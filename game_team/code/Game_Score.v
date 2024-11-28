@@ -4,6 +4,9 @@ module Game_Score;
     // wire
     // FND
 	wire	[3:0]	c_Score0, c_Score1, c_Score2;
+    wire fLstClk0, fIncClk0;
+
+    assign fLstClk0 = c_Score0 == 9;
 
 	// ##############################################################
     // assign

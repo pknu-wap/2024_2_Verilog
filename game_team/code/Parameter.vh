@@ -51,7 +51,7 @@ parameter PHASE_2	        = 2'b01;
 parameter PHASE_3	        = 2'b10;
 parameter PHASE_4	        = 2'b11;
 
-parameter MAX_PHASE_CNT     = 2;
+parameter MAX_PHASE_CNT     = 124;
 
 // Display        
 parameter H_DISPLAY         = 640;
