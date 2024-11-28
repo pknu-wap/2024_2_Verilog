@@ -66,11 +66,11 @@ module GALAGA
     reg [32:0] coordTempX[14:0];
     reg [32:0] coordTempY[14:0];
 
-    wire    fPlayer, fPlayerBullet, fEnemy, fEnemyBullet;
+    wire    fPlayerPixel, fPlayerBulletPixel, fEnemyPixel, fEnemyBulletPixel;
 
-    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_Each;
-    wire    [MAX_ENEMY-1:0]         fEnemy_Each;
-    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_Each;
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBulletPixel_Each;
+    wire    [MAX_ENEMY-1:0]         fEnemyPixel_Each;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletPixel_Each;
 
     function is_in_range(
             input [9:0] i_obj_x, i_obj_y, 
@@ -88,9 +88,9 @@ module GALAGA
     endfunction
 
     generate
-        assign  fPlayer = is_in_range(c_PlayerPosition[18:9], {1'b0, c_PlayerPosition[8:0]}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_x, c_PixelPos_y);
+        assign  fPlayerPixel = is_in_range(c_PlayerPosition[18:9], {1'b0, c_PlayerPosition[8:0]}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_x, c_PixelPos_y);
         for (gen_i = 0; gen_i < MAX_PLAYER_BULLET; gen_i = gen_i + 1) begin
-            assign  fPlayerBullet_Each[gen_i]   = is_in_range(
+            assign  fPlayerBulletPixel_Each[gen_i]   = is_in_range(
                                                     c_PlayerBulletPosition[gen_i][18:9], 
                                                     {1'b0, c_PlayerBulletPosition[gen_i][8:0]},
                                                     PLAYER_BULLET_WIDTH, 
@@ -99,9 +99,9 @@ module GALAGA
                                                     c_PixelPos_y
                                                 );
         end
-        assign  fPlayerBullet   = |fPlayerBullet_Each;
+        assign  fPlayerBulletPixel   = |fPlayerBulletPixel_Each;
         for (gen_j = 0; gen_j < MAX_ENEMY; gen_j = gen_j + 1) begin
-            assign  fEnemy_Each[gen_j]          = is_in_range(
+            assign  fEnemyPixel_Each[gen_j]          = is_in_range(
                                                     c_EnemyPosition[gen_j][18:9], 
                                                     {1'b0, c_EnemyPosition[gen_j][8:0]}, 
                                                     ENEMY_WIDTH, 
@@ -110,9 +110,9 @@ module GALAGA
                                                     c_PixelPos_y
                                                 );
         end
-        assign  fEnemy          = |fEnemy_Each;
+        assign  fEnemyPixel          = |fEnemyPixel_Each;
         for (gen_k = 0; gen_k < MAX_ENEMY_BULLET; gen_k = gen_k + 1) begin
-            assign  fEnemyBullet_Each[gen_k]    = is_in_range(
+            assign  fEnemyBulletPixel_Each[gen_k]    = is_in_range(
                                                     c_EnemyBulletPosition[gen_k][18:9], 
                                                     {1'b0, c_EnemyBulletPosition[gen_k][8:0]}, 
                                                     ENEMY_BULLET_WIDTH, 
@@ -121,14 +121,14 @@ module GALAGA
                                                     c_PixelPos_y
                                                 );
         end
-        assign  fEnemyBullet    = |fEnemyBullet_Each;
+        assign  fEnemyBulletPixel    = |fEnemyBulletPixel_Each;
     endgenerate
 
     assign  o_Clk = i_Clk;
-    assign  o_pixelState =  fPlayer         ? 3'b001 :
-                            fPlayerBullet   ? 3'b010 :
-                            fEnemyBullet    ? 3'b100 :
-                            fEnemy          ? 3'b011 : 3'b000;
+    assign  o_pixelState =  fPlayerPixel         ? 3'b001 :
+                            fPlayerBulletPixel   ? 3'b010 :
+                            fEnemyBulletPixel    ? 3'b100 :
+                            fEnemyPixel          ? 3'b011 : 3'b000;
 
     always @* begin
         if (c_PixelPos_x < H_TOTAL - 1) begin

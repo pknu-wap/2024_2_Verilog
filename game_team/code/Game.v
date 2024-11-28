@@ -11,7 +11,7 @@ module Game
     `include "Parameter.vh" 
   
     integer i, j;
-    genvar x, y, t, e;
+    genvar x, y, t, e, gen_i, gen_j, gen_k;
     
     ClkDiv  clk25m(i_Clk, o_Clk);
 
@@ -51,7 +51,6 @@ module Game
     reg [9:0]   c_PixelPos_X, n_PixelPos_X;
     reg [9:0]   c_PixelPos_Y, n_PixelPos_Y;
 
-
     // ##############################################################
     // wire
     // input
@@ -80,7 +79,30 @@ module Game
 
     // Display
     wire hDrawDone, vDrawDone, fDrawDone;
-    
+    wire fPlayerPixel, fPlayerBulletPixel, fEnemyPixel, fEnemyBulletPixel;
+    wire pixelState;
+
+    wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletPixel_Each;
+    wire [MAX_ENEMY-1:0]            fEnemyPixel_Each;
+    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletPixel_Each;
+
+    // ##############################################################
+    // function
+    // Display
+    function is_in_range(
+            input [9:0] i_obj_x, i_obj_y, 
+            input [9:0] i_obj_width, i_obj_height, 
+            input [9:0] i_n_pixel_x, i_n_pixel_y
+        );
+
+        reg horizontalRange, verticalRange;
+        
+        begin
+            horizontalRange = (i_n_pixel_x >= i_obj_x) & (i_n_pixel_x < i_obj_x + i_obj_width);
+            verticalRange   = (i_n_pixel_y >= i_obj_y) & (i_n_pixel_y < i_obj_y + i_obj_height);
+            is_in_range     = horizontalRange & verticalRange;
+        end
+    endfunction
     
     // ##############################################################
     // assign
@@ -149,6 +171,46 @@ module Game
         hDrawDone 	= c_PixelPos_X == H_DISPLAY - 1,
         vDrawDone 	= c_PixelPos_Y == V_DISPLAY - 1,
         fDrawDone  = hDrawDone & vDrawDone;
+    
+    assign pixelState = fPlayerPixel         ? 3'b001 :
+                        fPlayerBulletPixel   ? 3'b010 :
+                        fEnemyBulletPixel    ? 3'b100 :
+                        fEnemyPixel          ? 3'b011 : 3'b000;
+    
+    assign fPlayerPixel = is_in_range(c_PlayerPosition[18:9], {1'b0, c_PlayerPosition[8:0]}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_x, c_PixelPos_y);
+    for (gen_i = 0; gen_i < MAX_PLAYER_BULLET; gen_i = gen_i + 1) begin
+        assign fPlayerBulletPixel_Each[gen_i]   = is_in_range(
+                                                    c_PlayerBulletPosition[gen_i][18:9], 
+                                                    {1'b0, c_PlayerBulletPosition[gen_i][8:0]},
+                                                    PLAYER_BULLET_WIDTH, 
+                                                    {1'b0, PLAYER_BULLET_HEIGHT}, 
+                                                    c_PixelPos_x, 
+                                                    c_PixelPos_y
+                                                );
+    end
+    assign fPlayerBulletPixel   = |fPlayerBulletPixel_Each;
+    for (gen_j = 0; gen_j < MAX_ENEMY; gen_j = gen_j + 1) begin
+        assign fEnemyPixel_Each[gen_j]          = is_in_range(
+                                                    c_EnemyPosition[gen_j][18:9], 
+                                                    {1'b0, c_EnemyPosition[gen_j][8:0]}, 
+                                                    ENEMY_WIDTH, 
+                                                    {1'b0, ENEMY_HEIGHT}, 
+                                                    c_PixelPos_x, 
+                                                    c_PixelPos_y
+                                                );
+    end
+    assign fEnemyPixel          = |fEnemyPixel_Each;
+    for (gen_k = 0; gen_k < MAX_ENEMY_BULLET; gen_k = gen_k + 1) begin
+        assign fEnemyBulletPixel_Each[gen_k]    = is_in_range(
+                                                    c_EnemyBulletPosition[gen_k][18:9], 
+                                                    {1'b0, c_EnemyBulletPosition[gen_k][8:0]}, 
+                                                    ENEMY_BULLET_WIDTH, 
+                                                    {1'b0, ENEMY_BULLET_HEIGHT}, 
+                                                    c_PixelPos_x, 
+                                                    c_PixelPos_y
+                                                );
+    end
+    assign fEnemyBulletPixel    = |fEnemyBulletPixel_Each;
 
     // Debug
     // TODO : Delete Debug Data
@@ -371,6 +433,8 @@ module Game
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
                     n_PlayerBulletState[i] =  fOnPlayCollision ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : { c_PlayerBulletState[i] & ~fPlayerBulletOutOfBound[i] }) : c_PlayerBulletState[i];
                 end
+
+                // Monitor
 
                 // Game Over Check
 
