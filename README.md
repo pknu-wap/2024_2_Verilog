@@ -20,15 +20,19 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 스터디 내용은 [스터디 브랜치](https://github.com/pknu-wap/2024_2_Verilog/tree/Study)에 기록되어 있습니다.  학습한 내용, 실행 코드 등을 참고해주세요.
 
 ### 스터디 내용
-- 1주차 : Verilog 기초
 
-Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 공부 <br> 과제 - 코드작성 및 시뮬레이션
-- 2주차 : Counter 설계
+#### 1주차: Verilog 기초
+- **주제**: Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 학습  
+- **과제**: 코드 작성 및 시뮬레이션 실행
 
-과제 - Counter 기능추가 해보기 (자유롭게)
-- 3주차 : StopWatch 설계
+#### 2주차: Counter 설계
+- **주제**: Counter 설계 및 구현  
+- **과제**: 자유롭게 Counter 기능 추가하기
 
-과제 - StopWatch 기록기능 추가하기
+#### 3주차: StopWatch 설계
+- **주제**: StopWatch 설계 및 구현  
+- **과제**: StopWatch 기록 기능 추가하기
+
 
 <br>
 
