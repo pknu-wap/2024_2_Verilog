@@ -17,12 +17,6 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 <br>
 <br>
 
-# :calendar:개발일정
-![개발일정](https://github.com/user-attachments/assets/1eed9ea1-ef9a-4ce2-974e-5cde979567e3)
-
-
-<br>
-<br>
 
 # :bulb:스터디
 스터디 내용은 [스터디 브랜치](https://github.com/pknu-wap/2024_2_Verilog/tree/Study)에 기록되어 있습니다.  학습한 내용, 실행 코드 등을 참고해주세요.
@@ -37,3 +31,9 @@ Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 공부  과
 - 3주차 : StopWatch 설계
 
 과제 - StopWatch 기록기능 추가하기
+
+<br>
+<br>
+
+# :calendar:개발일정
+![개발일정](https://github.com/user-attachments/assets/1eed9ea1-ef9a-4ce2-974e-5cde979567e3)
