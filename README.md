@@ -21,8 +21,11 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 
 ### 스터디 내용
 - 1주차 : Verilog 기초
+
 Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 공부
 - 2주차 : Counter 설계
+
 과제 - Counter 기능추가 해보기 (자유롭게)
 - 3주차 : StopWatch 설계
+
 과제 - StopWatch 기록기능 추가하기
