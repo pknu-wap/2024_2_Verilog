@@ -6,6 +6,6 @@ module Enemy_Move (
         output      [9:0]   o_EnemyPosition
     );
 
-    assign o_EnemyPosition = (^i_PhaseState) ^ i_fReverse ? i_EnemyPosition[18:9] - 1, i_EnemyPosition[18:9] + 1;
+    assign o_EnemyPosition = (^i_PhaseState) ^ i_fReverse ? i_EnemyPosition[18:9] - 1 : i_EnemyPosition[18:9] + 1;
 
 endmodule

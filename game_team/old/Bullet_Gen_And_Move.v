@@ -1,35 +1,4 @@
 module Bullet_Gen_And_Move (input i_Clk, i_Rst, i_Btn);
-    parameter 
-        MAX_ENEMY_ROW         = 5,
-        MAX_ENEMY_COL         = 3,
-        MAX_ENEMY             = MAX_ENEMY_ROW * MAX_ENEMY_COL,
-        MAX_ENEMY_BULLET_SET  = 2,
-        MAX_PLAYER_BULLET     = 16; 
-
-    parameter
-        DISPLAY_VERTICAL   = 480,
-        DISPLAY_HORIZONTAL = 640;
-
-    parameter
-        BULLET_WIDTH    = 6,
-        BULLET_HEIGHT   = 20;
-
-    parameter
-        ENEMY_CENTER_X    = 302, 
-        ENEMY_CENTER_Y    = 108,
-        ENEMY_GAP_X       = 72, 
-        ENEMY_GAP_Y       = 60, 
-        PLAYER_CENTER_X   = 302, 
-        PLAYER_CENTER_Y   = 372;
-
-    parameter
-        ENEMY_BULLET_SPEED    = 2,
-        PLAYER_BULLET_SPEED   = 4;
-
-    parameter
-        NONE            = 19'b111_1111_1111_1111_1111,
-        VERTICAL_BORDER = DISPLAY_VERTICAL - BULLET_HEIGHT;
-
     integer i, j;
     genvar x, y, t, p;
 

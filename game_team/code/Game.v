@@ -1,5 +1,3 @@
-'include "./Parameter.v"    // parameter 외부 참조
-
 module Game 
     (
         input   i_Clk, i_Rst,
@@ -7,11 +5,15 @@ module Game
 
         output [6:0] o_FND0, o_FND1, o_FND2,
         output [7:0] o_Red, o_Green, o_Blue,
-        output o_Clk, o_blank, o_hsync, o_vsync,
+        output o_Clk, o_blank, o_hsync, o_vsync
     );
-
+    
+    `include "Parameter.vh" 
+  
     integer i, j;
-    genvar x, y, t, p;
+    genvar x, y, t, e;
+    
+    ClkDiv  clk25m(i_Clk, o_Clk);
 
     // ##############################################################
     // reg
@@ -39,7 +41,7 @@ module Game
 
     // Game
     reg [2:0]   c_GameState,    n_GameState;
-    reg [1:0]   c_OnPlayState,  n_OnPlayState;
+    reg [2:0]   c_OnPlayState,  n_OnPlayState;
     reg [3:0]   c_OnPlayCnt,    n_OnPlayCnt;
     reg [1:0]   c_Phase,        n_Phase;
     reg [6:0]   c_PhaseCnt,     n_PhaseCnt;
@@ -47,21 +49,21 @@ module Game
 
     // Display
     reg [9:0]   c_PixelPos_X, n_PixelPos_X;
-    reg [8:0]   c_PixelPos_Y, n_PixelPos_Y;
+    reg [9:0]   c_PixelPos_Y, n_PixelPos_Y;
 
 
     // ##############################################################
-    // wire & assign
+    // wire
     // input
     wire fPlayerLeftMove, fPlayerRightMove;   
     wire fPlayerFire, fGameStartStop;
-
-    assign 
-        fPlayerLeftMove         = i_Btn[0],
-        fPlayerRightMove        = i_Btn[1],
-        fPlayerFire             = ~i_PlayerBulletShoot  &  c_fPlayerShoot,
-        fGameStartStop          = ~i_GameStartStop      &  c_fGameStartStop;
-
+    
+    // Player
+    wire fPlayerLeftTouch, fPlayerRightTouch;
+    
+    wire [9:0] PlayerPosition_X;
+    wire [8:0] PlayerPosition_Y;
+    
     // Bullet
     wire fEnemyShoot;
     wire [MAX_ENEMY_BULLET_SET-1:0] fEnemyBulletOutOfBound [MAX_ENEMY-1:0];
@@ -69,14 +71,43 @@ module Game
 
     wire fPlayerCanShoot, fPlayerShoot;
 
-    assign fEnemyShoot  = fLstPhaseCnt & fOnPlayMove;
+    // Game
+    wire fTick;
+    wire fLstPhaseCnt, fNextPhase;
+    wire fIdle, fInit, fPlaying, fEnding;
+    wire fOnPlayMove, fOnPlayCollision, fOnPlayChecking, fOnPlayWaiting, fOnPlayCalcValue;
+    wire fVictory, fDefeat;
+
+    // Display
+    wire hDrawDone, vDrawDone, fDrawDone;
+    
+    
+    // ##############################################################
+    // assign
+    assign 
+        fPlayerLeftMove         = i_Btn[0],
+        fPlayerRightMove        = i_Btn[1],
+        fPlayerFire             = ~i_Btn[3] & c_fPlayerShoot,
+        fGameStartStop          = ~i_Btn[2] & c_fGameStartStop;
+
+    // Player
+    assign fPlayerLeftTouch = ~|c_PlayerPosition;
+    assign fPlayerRightTouch = c_PlayerPosition == H_DISPLAY - PLAYER_WIDTH;
+
+    assign 
+        PlayerPosition_X = c_PlayerPosition[18:9],
+        PlayerPosition_Y = c_PlayerPosition[ 8:0];
+
+    // Bullet
+    assign fEnemyShoot  = fLstPhaseCnt & fOnPlayCollision | fLstPhaseCnt & fOnPlayMove;
 
     for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin
-        assign fEnemyBulletOutOfBound[x] = c_EnemyBulletPosition[x][8:0] == VERTICAL_BORDER;
+        assign fEnemyBulletOutOfBound[x][0] = c_EnemyBulletPosition[x][0][8:0] == VERTICAL_BORDER;
+        assign fEnemyBulletOutOfBound[x][1] = c_EnemyBulletPosition[x][1][8:0] == VERTICAL_BORDER;
     end
 
-    for (p = 0; p < MAX_PLAYER_BULLET; p = p + 1) begin
-        assign fPlayerBulletOutOfBound[p] = ~(|c_PlayerBulletPosition[p][8:0]);
+    for (e = 0; e < MAX_PLAYER_BULLET; e = e + 1) begin
+        assign fPlayerBulletOutOfBound[e] = ~(|c_PlayerBulletPosition[e][8:0]);
     end
 
     assign 
@@ -84,56 +115,46 @@ module Game
         fPlayerShoot = fPlayerCanShoot & c_PlayerShootPushed;
 
     // Game
-    wire fTick;
-    wire fLstPhaseCnt, fNextPhase;
-    wire fIdle, fInit, fPlaying, fEnding;
-    wire fOnPlayDraw, fOnPlayMove, fOnPlayCollision, fOnPlayChecking, fOnPlayWaiting, fOnPlayCalcValue;
-    wire fVictory, fDefeat;
-
     assign 
         fTick   = fDrawDone;
 
     assign
         fIdle       = c_GameState == GAME_IDLE,
-        fInit       = c_GameState == GAME_INITIAL,
+        fInit       = c_GameState == GAME_INIT,
         fPlaying    = c_GameState == GAME_PLAYING,
         fEnding     = c_GameState == GAME_DEFEAT | c_GameState == GAME_VICTORY;
 
     assign
-        fOnPlayDraw         = c_OnPlayState == ONPLAY_DRAW,
+        fOnPlayWaiting      = c_OnPlayState == ONPLAY_WAITING,
+        fOnPlayCalcValue    = c_OnPlayState == ONPLAY_CALCVALUE,
         fOnPlayMove         = c_OnPlayState == ONPLAY_MOVE,
         fOnPlayCollision    = c_OnPlayState == ONPLAY_COLLISION,
-        fOnPlayCalcValue    = c_OnPlayState == ONPLAY_CALCVALUE,
-        fOnPlayChecking     = c_OnPlayState == ONPLAY_CHECKING,
-        fOnPlayWaiting      = c_OnPlayState == ONPLAY_WAITING;
+        fOnPlayChecking     = c_OnPlayState == ONPLAY_CHECKING;
 
     assign 
         fLstPhaseCnt = c_PhaseCnt == MAX_PHASE_CNT,
-        fNextPhase   = fLstPhaseCnt & fOnPlayCalcValue;
+        fNextPhase   = fLstPhaseCnt;
 
     assign 
         fVictory    = fPlaying & ~|c_EnemyState,
         fDefeat     = fPlaying & ~c_PlayerState;
 
     // Display
-    wire hDrawDone, vDrawDone, fDrawDone;
-
     assign  
-        o_hsync     = r_PixelPos_X < 656 || r_PixelPos_X >= 752,
-        o_vsync     = r_PixelPos_Y < 490 || r_PixelPos_Y >= 492,
-        o_blank     = ~(hBlank || vBlank);
+        o_hsync     = c_PixelPos_X < 656 || c_PixelPos_X >= 752,
+        o_vsync     = c_PixelPos_Y < 490 || c_PixelPos_Y >= 492,
+        o_blank     = ~(c_PixelPos_X >= H_DISPLAY || c_PixelPos_Y >= V_DISPLAY);
 
     assign
         hDrawDone 	= c_PixelPos_X == H_DISPLAY - 1,
-        vDrawDone 	= c_PixelPos_Y == V_DISPLAY - 1;
-        fDrawDone   = hDrawDone & vDrawDone;
+        vDrawDone 	= c_PixelPos_Y == V_DISPLAY - 1,
+        fDrawDone  = hDrawDone & vDrawDone;
 
     // Debug
     // TODO : Delete Debug Data
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    wire 
-        [9:0] EnemyPosition_X [MAX_ENEMY-1:0],
-        [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
+    wire [9:0] EnemyPosition_X [MAX_ENEMY-1:0];
+    wire [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
 
     for (t = 0; t < MAX_ENEMY; t = t + 1) begin
       assign 
@@ -141,21 +162,13 @@ module Game
         EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
     end
     
-    wire 
-        [9:0] PlayerPosition_X,
-        [8:0] PlayerPosition_Y;
-    
-    assign 
-        PlayerPosition_X = c_PlayerPosition[18:9],
-        PlayerPosition_Y = c_PlayerPosition[ 8:0];
-    
     wire [8:0] PlayerBulletPosition_Y;
     
     assign PlayerBulletPosition_Y = c_PlayerBulletPosition[0][ 8:0];
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     // ##############################################################
-    // 비동기 입력
+    // ??? ??
     always @(negedge i_Rst, posedge i_Clk) begin
         if (~i_Rst) begin
             c_fPlayerShoot          = 1;
@@ -170,6 +183,7 @@ module Game
                 c_EnemyBulletState[i][j]    = 0;
               end
             end
+            c_EnemyBulletFlag     	 = 0;
 
             c_PlayerState           = 0;
             c_PlayerPosition = {PLAYER_CENTER_X, PLAYER_CENTER_Y};
@@ -180,7 +194,7 @@ module Game
             end
 
             c_GameState             = GAME_IDLE;
-            c_OnPlayState           = ONPLAY_DRAW;
+            c_OnPlayState           = ONPLAY_WAITING;
             c_OnPlayCnt             = 0;
             c_Score                 = 0;
 
@@ -189,8 +203,6 @@ module Game
 
             c_PixelPos_X = 0;
             c_PixelPos_Y = 0;
-
-            o_Clk = 0;
 
         end else begin
             c_fPlayerShoot          = n_fPlayerShoot;
@@ -220,24 +232,16 @@ module Game
 
             c_Phase                 = n_Phase;
             c_PhaseCnt              = n_PhaseCnt;
-
-            o_Clk = ~o_Clk;
+            
+            c_PixelPos_X            = n_PixelPos_X;
+            c_PixelPos_Y            = n_PixelPos_Y;
         end
     end
 
-    // Display 비동기 입력
+    // Display ??? ??
     always @(posedge o_Clk) begin
-        if (c_PixelPos_X == H_TOTAL - 1) begin
-            n_PixelPos_X = 0;
-
-            if (c_PixelPos_Y == V_TOTAL - 1) 
-                n_PixelPos_Y = 0;
-            else
-                n_PixelPos_Y = c_PixelPos_Y + 1;
-
-            end 
-        else
-            n_PixelPos_X = c_PixelPos_X + 1; 
+        n_PixelPos_X = c_PixelPos_X == H_TOTAL - 1 ? 0 : c_PixelPos_X + 1;
+        n_PixelPos_Y = c_PixelPos_X == H_TOTAL - 1 ? (c_PixelPos_Y == V_TOTAL - 1 ? 0 : c_PixelPos_Y + 1) : c_PixelPos_Y;
     end
 
 
@@ -281,37 +285,36 @@ module Game
         
         case (c_GameState)
             GAME_IDLE: begin
-                if (fGameStartStop) n_GameState = GAME_INITIAL;
-
+                if (fGameStartStop) n_GameState = GAME_INIT;
             end
-            GAME_INITIAL: begin
-                n_EnemyState            = {MAX_ENEMY{1'b1}};
-                n_EnemyBulletState      = {MAX_ENEMY_BULLET{1'b0}};
-                
 
+            GAME_INIT: begin
+                n_EnemyState            = {MAX_ENEMY{1'b1}};
+                
                 for (i = 0; i < MAX_ENEMY_COL; i = i + 1) begin
                     for (j = 0; j < MAX_ENEMY_ROW; j = j + 1) begin
-                        c_EnemyPosition[MAX_ENEMY_ROW * i + j][18:9] = ENEMY_CENTER_X + (j - (MAX_ENEMY_ROW - 1) / 2) * ENEMY_GAP_X;
-                        c_EnemyPosition[MAX_ENEMY_ROW * i + j][ 8:0] = ENEMY_CENTER_Y + (i - (MAX_ENEMY_COL - 1) / 2) * ENEMY_GAP_Y;
+                        n_EnemyPosition[MAX_ENEMY_ROW * i + j][18:9] = ENEMY_CENTER_X + (j - (MAX_ENEMY_ROW - 1) / 2) * ENEMY_GAP_X;
+                        n_EnemyPosition[MAX_ENEMY_ROW * i + j][ 8:0] = ENEMY_CENTER_Y + (i - (MAX_ENEMY_COL - 1) / 2) * ENEMY_GAP_Y;
                     end
                 end
 
                 for (i = 0; i < MAX_ENEMY; i = i + 1) begin
                     for (j = 0; j < MAX_ENEMY_BULLET_SET; j = j + 1) begin
-                        c_EnemyBulletPosition[i][j] = NONE;
+                        n_EnemyBulletPosition[i][j] = NONE;
+                        n_EnemyBulletState[i][j]    = 0;
                     end
                 end
 
                 n_PlayerState           = 1'b1;
-                c_PlayerPosition[18:9]  = PLAYER_CENTER_X;
-                c_PlayerPosition[ 8:0]  = PLAYER_CENTER_Y;
+                n_PlayerPosition[18:9]  = PLAYER_CENTER_X;
+                n_PlayerPosition[ 8:0]  = PLAYER_CENTER_Y;
                 n_PlayerBulletState     = {MAX_PLAYER_BULLET{1'b0}};
 
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                    c_PlayerBulletPosition[i] = NONE;
+                    n_PlayerBulletPosition[i] = NONE;
                 end
 
-                n_OnPlayState           = ONPLAY_DRAW;
+                n_OnPlayState           = ONPLAY_WAITING;
                 n_OnPlayCnt             = 0;
                 n_Score                 = 0;
 
@@ -319,25 +322,55 @@ module Game
                 n_PhaseCnt              = 0;
 
                 n_GameState             = GAME_PLAYING;
-
             end
+
             GAME_PLAYING: begin
                 n_OnPlayState           =
-                    fOnPlayWaiting & fTick  ? ONPLAY_CALCVALUE : 
-                    fOnPlayCalcValue        ? ONPLAY_MOVE :
-                    fOnPlayMove             ? ONPLAY_COLLISION :
+                    fOnPlayWaiting & fTick  ? ONPLAY_MOVE : 
+                    fOnPlayMove             ? ONPLAY_CALCVALUE :
+                    fOnPlayCalcValue        ? ONPLAY_COLLISION :
                     fOnPlayCollision        ? ONPLAY_CHECKING :
                     fOnPlayChecking         ? ONPLAY_WAITING : c_OnPlayState;
 
                 // Calculate Value
-                n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
+                n_Phase                 = fOnPlayCalcValue & fNextPhase ? c_Phase + 1 : c_Phase;
                 n_PhaseCnt              = fOnPlayCalcValue ? (fLstPhaseCnt ? 0 : c_PhaseCnt + 1) : c_PhaseCnt;
 
-                // Moving
-                
+                n_EnemyBulletFlag       = fOnPlayCalcValue & fLstPhaseCnt ? !c_EnemyBulletFlag : c_EnemyBulletFlag;
 
-                // Collision Check
+                n_PlayerShootCoolDown   = fOnPlayCalcValue ? (fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? 0 : c_PlayerShootCoolDown - 1}) : c_PlayerShootCoolDown;
+                n_PlayerShootPushed     = fOnPlayCalcValue ? (fPlayerShoot ? 0 : c_PlayerShootPushed | ~i_Btn) : c_PlayerShootPushed;
+                n_PlayerBulletCnt       = fOnPlayCalcValue ? (fPlayerShoot ? c_PlayerBulletCnt + 1 : c_PlayerBulletCnt) : c_PlayerBulletCnt;
+
+                // Moving
+                for (i = 0; i < MAX_ENEMY_ROW; i = i + 1) begin
+                    n_EnemyPosition[i   ][18:9] = fOnPlayMove ? ( (^c_Phase) ? c_EnemyPosition[i   ][18:9] + 1 : n_EnemyPosition[i   ][18:9] - 1) : c_EnemyPosition[i   ][18:9];
+                    n_EnemyPosition[i+ 5][18:9] = fOnPlayMove ? (!(^c_Phase) ? c_EnemyPosition[i+ 5][18:9] + 1 : n_EnemyPosition[i+ 5][18:9] - 1) : c_EnemyPosition[i+ 5][18:9];
+                    n_EnemyPosition[i+10][18:9] = fOnPlayMove ? ( (^c_Phase) ? c_EnemyPosition[i+10][18:9] + 1 : n_EnemyPosition[i+10][18:9] - 1) : c_EnemyPosition[i+10][18:9];
+                end
+
+                for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+                    n_EnemyBulletPosition[i][0][9:0] = fOnPlayMove ? ((!c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][0] ? c_EnemyBulletPosition[i][0][9:0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][0][9:0];
+                    n_EnemyBulletPosition[i][1][9:0] = fOnPlayMove ? (( c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][1] ? c_EnemyBulletPosition[i][1][9:0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][1][9:0];
+                end
+
+                n_PlayerPosition[18:9] = 
+                    (fOnPlayMove & fPlayerLeftMove  & ~fPlayerLeftTouch)   ? (PlayerPosition_X - PLAYER_SPEED) :
+                    (fOnPlayMove & fPlayerRightMove & ~fPlayerRightTouch)  ? (PlayerPosition_X + PLAYER_SPEED) : PlayerPosition_X;
+
+                for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                    n_PlayerBulletPosition[i][9:0] = fOnPlayMove ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? c_PlayerPosition : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE }) : c_PlayerBulletPosition[i][9:0];
+                end
                 
+                // Collision Check
+                for (i = 0; i < MAX_ENEMY; i = i + 1) begin
+                    n_EnemyBulletState[i][0] = fOnPlayCollision ? ((!c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][0] & ~fEnemyBulletOutOfBound[i][0]) : c_EnemyBulletState[i][0];
+                    n_EnemyBulletState[i][1] = fOnPlayCollision ? (( c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][1] & ~fEnemyBulletOutOfBound[i][1]) : c_EnemyBulletState[i][1];
+                end
+
+                for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
+                    n_PlayerBulletState[i] =  fOnPlayCollision ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : { c_PlayerBulletState[i] & ~fPlayerBulletOutOfBound[i] }) : c_PlayerBulletState[i];
+                end
 
                 // Game Over Check
 
@@ -345,36 +378,17 @@ module Game
                 else if (!c_PlayerState)    n_GameState = GAME_DEFEAT;
                 else if (fGameStartStop)    n_GameState = GAME_IDLE;
             end
-            GAME_VICTORY: begin
-                // TODO
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적, 적 탄, 플레이어, 플레이어 탄, 충돌
-                // DONE
-                // 1. 상태를 정의: 
-                // 2. 동작을 정의: 
 
+            GAME_VICTORY: begin
                 if (fGameStartStop) n_GameState = GAME_IDLE;
                 else                n_GameState = GAME_VICTORY;
             end
-            GAME_DEFEAT: begin
-                // TODO
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적, 적 탄, 플레이어, 플레이어 탄, 충돌
-                // DONE
-                // 1. 상태를 정의: 
-                // 2. 동작을 정의: 
 
+            GAME_DEFEAT: begin
                 if (fGameStartStop) n_GameState = GAME_IDLE;
                 else                n_GameState = GAME_DEFEAT;
             end
-            GAME_ERROR: begin
-                // TODO
-                // 1. 상태를 정의: 적, 적 탄, 플레이어, 플레이어 탄, 게임, 스테이지, 점수
-                // 2. 동작을 정의: 적, 적 탄, 플레이어, 플레이어 탄, 충돌
-                // DONE
-                // 1. 상태를 정의: 
-                // 2. 동작을 정의: 
-            end
+
         endcase
     end
 
