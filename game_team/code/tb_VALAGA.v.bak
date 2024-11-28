@@ -12,7 +12,7 @@ module tb_VALAGA;
 		Btn = {4{1'b1}};
 
 		@(negedge Clk) Rst = 1;
-		#1000	Btn	= 4'b0111;
+		#1000	Btn	= 4'b0000;
 		#1000	Btn = 4'b1111;
 		// more...
 	end

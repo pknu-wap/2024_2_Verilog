@@ -11,7 +11,7 @@ module VALAGA
     `include "Parameter.vh" 
   
     integer i, j;
-    genvar x, y, t, e, gen_i, gen_j, gen_k, gen_x, gen_y, gen_z;
+    genvar x, y, t, e, gen_i, gen_j, gen_k, gen_x, gen_y, gen_z, ii, jj, k, l, m, n, o, p;
     
     ClkDiv  clk25m(i_Clk, o_Clk);
 
@@ -102,6 +102,35 @@ module VALAGA
             is_in_range     = horizontalRange & verticalRange;
         end
     endfunction
+
+    // Collision
+    function IsCollision
+        (
+            input   [18:0]  i_APosition, 
+            input   [18:0]  i_BPosition, 
+            input   [9:0]   i_AWidth, 
+            input   [8:0]   i_AHeight, 
+            input   [9:0]   i_BWidth, 
+            input   [8:0]   i_BHeight
+        );
+
+        reg         horizontalCollision;
+        reg         verticalCollision;
+        reg [9:0]   Ax1, Ax2, Bx1, Bx2;
+        reg [8:0]   Ay1, Ay2, By1, By2;
+
+        begin
+            {Ax1, Ay1}          = i_APosition;
+            {Bx1, By1}          = i_BPosition;
+            {Ax2, Ay2}          = {Ax1 + i_AWidth, Ay1 + i_AHeight};
+            {Bx2, By2}          = {Bx1 + i_BWidth, By1 + i_BHeight};
+
+            horizontalCollision = ~((Ax2 <= Bx1) | (Ax1 >= Bx2));
+            verticalCollision   = ~((Ay2 <= By1) | (Ay1 >= By2));
+            
+            IsCollision         = horizontalCollision & verticalCollision;
+        end
+    endfunction
     
     // ##############################################################
     // assign
@@ -120,7 +149,8 @@ module VALAGA
         PlayerPosition_Y = c_PlayerPosition[ 8:0];
 
     // Bullet
-    assign fEnemyShoot  = fLstPhaseCnt & fOnPlayCollision | fLstPhaseCnt & fOnPlayMove;
+    assign fEnemyShoot  = fLstPhaseCnt;
+    //assign fEnemyShoot  = fLstPhaseCnt & fOnPlayCollision | fLstPhaseCnt & fOnPlayMove;
 	 
     generate
         for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin :EnemyBulletBoundCheck
@@ -180,6 +210,7 @@ module VALAGA
                         fEnemyBulletPixel    ? 3'b100 :
                         fEnemyPixel          ? 3'b011 : 3'b000;
     
+    // ##############################################################
     // Object Detection
     assign fPlayerPixel = is_in_range(PlayerPosition_X, {1'b0, PlayerPosition_Y}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_X, c_PixelPos_Y);
 
@@ -225,7 +256,6 @@ module VALAGA
             end
         end
     endgenerate
-
     assign fEnemyBulletPixel = 
         |fEnemyBulletPixel_Each[ 0] |
         |fEnemyBulletPixel_Each[ 1] |
@@ -247,6 +277,104 @@ module VALAGA
         o_Red   = fEnemyPixel ? 8'b11111111 : 0,
         o_Green = fPlayerBulletPixel | fEnemyBulletPixel ? 8'b11111111 : 0,
         o_Blue  = fPlayerPixel ? 8'b11111111 : 0;
+
+    // ##############################################################
+    // Collision
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY_BULLET-1:0];
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Player;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletCollision;
+
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayerBullet_VS_EnemyBullet_Each   [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_EnemyBullet;
+    wire    [MAX_ENEMY-1:0]         fPlayerBullet_VS_Enemy_Each         [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_Enemy;
+    wire    [MAX_PLAYER_BULLET-1:0] fPlayerBulletCollision;
+
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemy_VS_PlayerBullet_Each         [MAX_ENEMY-1:0];
+    wire    [MAX_ENEMY-1:0]         fEnemy_VS_PlayerBullet;
+    wire    [MAX_ENEMY-1:0]         fEnemyCollision;
+
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayer_VS_EnemyBullet_Each;
+    wire                            fPlayer_VS_EnemyBullet;
+    wire                            fPlayerCollision;
+
+    for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin
+        for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin
+            assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
+                                                                c_EnemyBulletPosition[ii], 
+                                                                c_PlayerBulletPosition[jj], 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT, 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+        end
+        assign  fEnemyBullet_VS_PlayerBullet[ii]    = |fEnemyBullet_VS_PlayerBullet_Each[ii] ? 1'b1 : 1'b0;
+        assign  fEnemyBullet_VS_Player[ii]          = IsCollision(
+                                                        c_EnemyBulletPosition[ii], 
+                                                        {c_PlayerPosition, PLAYER_CENTER_Y}, 
+                                                        BULLET_WIDTH, 
+                                                        BULLET_HEIGHT, 
+                                                        PLAYER_WIDTH, 
+                                                        PLAYER_HEIGHT
+                                                    ) ? 1'b1 : 1'b0;
+        assign  fEnemyBulletCollision[ii]           = fEnemyBullet_VS_PlayerBullet[ii] | fEnemyBullet_VS_Player[ii];
+    end
+
+    for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin
+        for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin
+            assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
+                                                                c_PlayerBulletPosition[k], 
+                                                                c_EnemyBulletPosition[l], 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT, 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+        end
+        assign  fPlayerBullet_VS_EnemyBullet[k]     = |fPlayerBullet_VS_EnemyBullet_Each[k] ? 1'b1 : 1'b0;
+        for (m = 0; m < MAX_ENEMY; m = m + 1) begin
+            assign  fPlayerBullet_VS_Enemy_Each[k][m]   = IsCollision(
+                                                            c_PlayerBulletPosition[k], 
+                                                            c_EnemyPosition[m], 
+                                                            BULLET_WIDTH, 
+                                                            BULLET_HEIGHT, 
+                                                            ENEMY_WIDTH, 
+                                                            ENEMY_HEIGHT
+                                                        ) ? 1'b1 : 1'b0;
+        end
+        assign  fPlayerBullet_VS_Enemy[k]           = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
+        assign  fPlayerBulletCollision[k]           = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
+    end
+
+    for (n = 0; n < MAX_ENEMY; n = n + 1) begin
+        for (o = 0; o < MAX_PLAYER_BULLET; o = o + 1) begin
+            assign  fEnemy_VS_PlayerBullet_Each[n][o]   = IsCollision(
+                                                            c_EnemyPosition[n], 
+                                                            c_PlayerBulletPosition[o], 
+                                                            ENEMY_WIDTH, 
+                                                            ENEMY_HEIGHT, 
+                                                            BULLET_WIDTH, 
+                                                            BULLET_HEIGHT
+                                                        ) ? 1'b1 : 1'b0;
+        end
+        assign  fEnemy_VS_PlayerBullet[n]           = |fEnemy_VS_PlayerBullet_Each[n] ? 1'b1 : 1'b0;
+        assign  fEnemyCollision[n]                  = fEnemy_VS_PlayerBullet[n];
+    end
+
+    for (p = 0; p < MAX_ENEMY_BULLET; p = p + 1) begin
+        assign  fPlayer_VS_EnemyBullet_Each[p]      = IsCollision(
+                                                        {c_PlayerPosition, PLAYER_CENTER_Y}, 
+                                                        c_EnemyBulletPosition[p], 
+                                                        PLAYER_WIDTH, 
+                                                        PLAYER_HEIGHT, 
+                                                        BULLET_WIDTH, 
+                                                        BULLET_HEIGHT
+                                                    ) ? 1'b1 : 1'b0;
+    end
+    assign  fPlayer_VS_EnemyBullet  = |fPlayer_VS_EnemyBullet_Each ? 1'b1 : 1'b0;
+    assign  fPlayerCollision        = fPlayer_VS_EnemyBullet;
 
     // Debug
     // TODO : Delete Debug Data
@@ -281,7 +409,6 @@ module VALAGA
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     // ##############################################################
-    // ??? ??
     always @(negedge i_Rst, posedge i_Clk) begin
         if (~i_Rst) begin
             c_fPlayerShoot          = 1;
@@ -334,6 +461,8 @@ module VALAGA
               end
             end
 
+            c_EnemyBulletFlag       = n_EnemyBulletFlag;
+
             c_PlayerState           = n_PlayerState;
             c_PlayerPosition        = n_PlayerPosition;
             c_PlayerBulletState     = n_PlayerBulletState;
@@ -357,7 +486,7 @@ module VALAGA
         end
     end
 
-    // Display ??? ??
+    // Display 
     always @(posedge o_Clk) begin
         n_PixelPos_X = c_PixelPos_X == H_TOTAL - 1 ? 0 : c_PixelPos_X + 1;
         n_PixelPos_Y = c_PixelPos_X == H_TOTAL - 1 ? (c_PixelPos_Y == V_TOTAL - 1 ? 0 : c_PixelPos_Y + 1) : c_PixelPos_Y;
@@ -450,43 +579,43 @@ module VALAGA
                     fOnPlayChecking         ? ONPLAY_WAITING : c_OnPlayState;
 
                 // Calculate Value
-                n_Phase                 = fOnPlayCalcValue & fNextPhase ? c_Phase + 1 : c_Phase;
-                n_PhaseCnt              = fOnPlayCalcValue ? (fLstPhaseCnt ? 0 : c_PhaseCnt + 1) : c_PhaseCnt;
+                n_Phase                 = fTick & fNextPhase ? c_Phase + 1 : c_Phase;
+                n_PhaseCnt              = fTick ? (fLstPhaseCnt ? 0 : c_PhaseCnt + 1) : c_PhaseCnt;
 
-                n_EnemyBulletFlag       = fOnPlayCalcValue & fLstPhaseCnt ? !c_EnemyBulletFlag : c_EnemyBulletFlag;
+                n_EnemyBulletFlag       = fTick & fEnemyShoot ? ~c_EnemyBulletFlag : c_EnemyBulletFlag;
 
-                n_PlayerShootCoolDown   = fOnPlayCalcValue ? (fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? 0 : c_PlayerShootCoolDown - 1}) : c_PlayerShootCoolDown;
-                n_PlayerShootPushed     = fOnPlayCalcValue ? (fPlayerShoot ? 0 : c_PlayerShootPushed | ~i_Btn) : c_PlayerShootPushed;
-                n_PlayerBulletCnt       = fOnPlayCalcValue ? (fPlayerShoot ? c_PlayerBulletCnt + 1 : c_PlayerBulletCnt) : c_PlayerBulletCnt;
+                n_PlayerShootCoolDown   = fTick ? (fPlayerShoot ? 4'd11 : {fPlayerCanShoot ? 0 : c_PlayerShootCoolDown - 1}) : c_PlayerShootCoolDown;
+                n_PlayerShootPushed     = fTick ? (fPlayerShoot ? 0 : c_PlayerShootPushed | ~i_Btn[1]) : c_PlayerShootPushed;
+                n_PlayerBulletCnt       = fTick ? (fPlayerShoot ? c_PlayerBulletCnt + 1 : c_PlayerBulletCnt) : c_PlayerBulletCnt;
 
                 // Moving
                 for (i = 0; i < MAX_ENEMY_ROW; i = i + 1) begin
-                    n_EnemyPosition[i   ][18:9] = fOnPlayMove ? ( (^c_Phase) ? c_EnemyPosition[i   ][18:9] + 1 : n_EnemyPosition[i   ][18:9] - 1) : c_EnemyPosition[i   ][18:9];
-                    n_EnemyPosition[i+ 5][18:9] = fOnPlayMove ? (!(^c_Phase) ? c_EnemyPosition[i+ 5][18:9] + 1 : n_EnemyPosition[i+ 5][18:9] - 1) : c_EnemyPosition[i+ 5][18:9];
-                    n_EnemyPosition[i+10][18:9] = fOnPlayMove ? ( (^c_Phase) ? c_EnemyPosition[i+10][18:9] + 1 : n_EnemyPosition[i+10][18:9] - 1) : c_EnemyPosition[i+10][18:9];
+                    n_EnemyPosition[i   ][18:9] = fTick ? ( (^c_Phase) ? c_EnemyPosition[i   ][18:9] + 1 : n_EnemyPosition[i   ][18:9] - 1) : c_EnemyPosition[i   ][18:9];
+                    n_EnemyPosition[i+ 5][18:9] = fTick ? (!(^c_Phase) ? c_EnemyPosition[i+ 5][18:9] + 1 : n_EnemyPosition[i+ 5][18:9] - 1) : c_EnemyPosition[i+ 5][18:9];
+                    n_EnemyPosition[i+10][18:9] = fTick ? ( (^c_Phase) ? c_EnemyPosition[i+10][18:9] + 1 : n_EnemyPosition[i+10][18:9] - 1) : c_EnemyPosition[i+10][18:9];
                 end
 
                 for (i = 0; i < MAX_ENEMY; i = i + 1) begin
-                    n_EnemyBulletPosition[i][0] = fOnPlayMove ? ((!c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][0] ? c_EnemyBulletPosition[i][0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][0];
-                    n_EnemyBulletPosition[i][1] = fOnPlayMove ? (( c_EnemyBulletFlag & fEnemyShoot) ? c_EnemyPosition[i] : { c_EnemyBulletState[i][1] ? c_EnemyBulletPosition[i][1] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][1];
+                    n_EnemyBulletPosition[i][0] = fTick ? ((!c_EnemyBulletFlag & fEnemyShoot) ? {c_EnemyPosition[i][18:9] + (ENEMY_WIDTH / 2), c_EnemyPosition[i][8:0] + ENEMY_HEIGHT} : { c_EnemyBulletState[i][0] ? c_EnemyBulletPosition[i][0] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][0];
+                    n_EnemyBulletPosition[i][1] = fTick ? (( c_EnemyBulletFlag & fEnemyShoot) ? {c_EnemyPosition[i][18:9] + (ENEMY_WIDTH / 2), c_EnemyPosition[i][8:0] + ENEMY_HEIGHT} : { c_EnemyBulletState[i][1] ? c_EnemyBulletPosition[i][1] + ENEMY_BULLET_SPEED : NONE }) : c_EnemyBulletPosition[i][1];
                 end
 
                 n_PlayerPosition[18:9] = 
-                    (fOnPlayMove & fPlayerLeftMove  & ~fPlayerLeftTouch)   ? (PlayerPosition_X - PLAYER_SPEED) :
-                    (fOnPlayMove & fPlayerRightMove & ~fPlayerRightTouch)  ? (PlayerPosition_X + PLAYER_SPEED) : PlayerPosition_X;
+                    (fTick & fPlayerLeftMove  & ~fPlayerLeftTouch)   ? (PlayerPosition_X - PLAYER_SPEED) :
+                    (fTick & fPlayerRightMove & ~fPlayerRightTouch)  ? (PlayerPosition_X + PLAYER_SPEED) : PlayerPosition_X;
 
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                    n_PlayerBulletPosition[i] = fOnPlayMove ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? c_PlayerPosition : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE }) : c_PlayerBulletPosition[i];
+                    n_PlayerBulletPosition[i] = fTick ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? {c_PlayerPosition[18:9] + (PLAYER_WIDTH / 2), c_PlayerPosition[8:0] - BULLET_HEIGHT} : { c_PlayerBulletState[i] ? c_PlayerBulletPosition[i] - PLAYER_BULLET_SPEED : NONE }) : c_PlayerBulletPosition[i];
                 end
                 
                 // Collision Check
                 for (i = 0; i < MAX_ENEMY; i = i + 1) begin
-                    n_EnemyBulletState[i][0] = fOnPlayCollision ? ((!c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][0] & ~fEnemyBulletOutOfBound[i][0]) : c_EnemyBulletState[i][0];
-                    n_EnemyBulletState[i][1] = fOnPlayCollision ? (( c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][1] & ~fEnemyBulletOutOfBound[i][1]) : c_EnemyBulletState[i][1];
+                    n_EnemyBulletState[i][0] = fTick ? ((!c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][0] & ~fEnemyBulletOutOfBound[i][0]) : c_EnemyBulletState[i][0];
+                    n_EnemyBulletState[i][1] = fTick ? (( c_EnemyBulletFlag & fEnemyShoot) ? 1 : c_EnemyBulletState[i][1] & ~fEnemyBulletOutOfBound[i][1]) : c_EnemyBulletState[i][1];
                 end
 
                 for (i = 0; i < MAX_PLAYER_BULLET; i = i + 1) begin
-                    n_PlayerBulletState[i] =  fOnPlayCollision ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : { c_PlayerBulletState[i] & ~fPlayerBulletOutOfBound[i] }) : c_PlayerBulletState[i];
+                    n_PlayerBulletState[i] =  fTick ? (fPlayerShoot & (i == c_PlayerBulletCnt) ? 1 : { c_PlayerBulletState[i] & ~fPlayerBulletOutOfBound[i] }) : c_PlayerBulletState[i];
                 end
 
                 // Monitor

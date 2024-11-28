@@ -5,8 +5,8 @@ module Game_Collision;
     // ##############################################################
     // wire
     // Collision
-    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY_BULLET-1:0];
-    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet;
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY-1:0][MAX_ENEMY_BULLET_SET-1:0];
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet        [MAX_ENEMY_BULLET_SET-1:0];
     wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Player;
     wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletCollision;
 
@@ -27,8 +27,8 @@ module Game_Collision;
     // ##############################################################
     // assign
     // Collision
-    for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin
-        for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin
+    for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin :EBPBCCO
+        for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin :EBPBCCI
             assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
                                                                 c_EnemyBulletPosition[ii], 
                                                                 c_PlayerBulletPosition[jj], 
