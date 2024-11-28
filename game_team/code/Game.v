@@ -45,10 +45,10 @@ module Game
     reg [6:0]   c_PhaseCnt,     n_PhaseCnt;
     reg [9:0]   c_Score,        n_Score;
 
-
     // Display
     reg [9:0]   c_PixelPos_X, n_PixelPos_X;
     reg [8:0]   c_PixelPos_Y, n_PixelPos_Y;
+
 
     // ##############################################################
     // wire & assign
@@ -69,6 +69,8 @@ module Game
 
     wire fPlayerCanShoot, fPlayerShoot;
 
+    assign fEnemyShoot  = fLstPhaseCnt & fOnPlayMove;
+
     for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin
         assign fEnemyBulletOutOfBound[x] = c_EnemyBulletPosition[x][8:0] == VERTICAL_BORDER;
     end
@@ -83,7 +85,7 @@ module Game
 
     // Game
     wire fTick;
-    wire fNextPhase;
+    wire fLstPhaseCnt, fNextPhase;
     wire fIdle, fInit, fPlaying, fEnding;
     wire fOnPlayDraw, fOnPlayMove, fOnPlayCollision, fOnPlayChecking, fOnPlayWaiting, fOnPlayCalcValue;
     wire fVictory, fDefeat;
@@ -106,8 +108,8 @@ module Game
         fOnPlayWaiting      = c_OnPlayState == ONPLAY_WAITING;
 
     assign 
-        fNextPhase   = c_PhaseCnt == MAX_PHASE_CNT,
-        fEnemyShoot  = fNextPhase;
+        fLstPhaseCnt = c_PhaseCnt == MAX_PHASE_CNT,
+        fNextPhase   = fLstPhaseCnt & fOnPlayCalcValue;
 
     assign 
         fVictory    = fPlaying & ~|c_EnemyState,
@@ -320,8 +322,24 @@ module Game
 
             end
             GAME_PLAYING: begin
-                n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
+                n_OnPlayState           =
+                    fOnPlayWaiting & fTick  ? ONPLAY_CALCVALUE : 
+                    fOnPlayCalcValue        ? ONPLAY_MOVE :
+                    fOnPlayMove             ? ONPLAY_COLLISION :
+                    fOnPlayCollision        ? ONPLAY_CHECKING :
+                    fOnPlayChecking         ? ONPLAY_WAITING : c_OnPlayState;
 
+                // Calculate Value
+                n_Phase                 = fNextPhase ? c_Phase + 1 : c_Phase;
+                n_PhaseCnt              = fOnPlayCalcValue ? (fLstPhaseCnt ? 0 : c_PhaseCnt + 1) : c_PhaseCnt;
+
+                // Moving
+                
+
+                // Collision Check
+                
+
+                // Game Over Check
 
                 if (!(&c_EnemyState))       n_GameState = GAME_VICTORY;
                 else if (!c_PlayerState)    n_GameState = GAME_DEFEAT;
