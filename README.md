@@ -6,7 +6,6 @@
 FPGA 기반 Galaga 스타일 게임 모듈 구현
 
 <br>
-<br>
 
 # :star2:팀원소개
 |팀장 및 PM|모니터 팀|모니터 팀|게임 개발 팀|게임 개발 팀|
@@ -14,7 +13,6 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 |![1](https://github.com/user-attachments/assets/4bc2a637-6315-448f-9aa7-787b25796d0b)|![2](https://github.com/user-attachments/assets/353d72d6-0793-4037-a421-6f62e656bdba)|![3 (2)](https://github.com/user-attachments/assets/3f66b00f-d81c-4c67-b09b-02172620af12)|![4](https://github.com/user-attachments/assets/07c7495f-bd46-496c-8de5-ae54a6c0a922)|![5](https://github.com/user-attachments/assets/f72157c8-6af1-4dbe-a99d-e50396e33219)|
 |[우상원](https://github.com/yuyu0830)|[박현주](https://github.com/hyeonju0925)|[최은지](https://github.com/eunji433)|[정지호](https://github.com/LightningXQ)|[박현](https://github.com/ParkHyeon89)|
 
-<br>
 <br>
 
 
@@ -32,7 +30,6 @@ Verilog의 기본적인 구조와 특징, 사용되는 툴에 대해 공부  과
 
 과제 - StopWatch 기록기능 추가하기
 
-<br>
 <br>
 
 # :calendar:개발일정
