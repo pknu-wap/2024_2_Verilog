@@ -1,10 +1,18 @@
 module Game_FND
     (
         input			i_Clk, i_Rst, 
+        input   [2:0]   i_GameState, 
         output	[6:0]	o_FND0, o_FND1, o_FND2
     );
 
     parameter LST_CLK = 1_000_000_000 / 20 - 1;
+
+    parameter GAME_IDLE         = 3'b000;
+    parameter GAME_INIT         = 3'b001;
+    parameter GAME_PLAYING      = 3'b010;
+    parameter GAME_VICTORY      = 3'b011;
+    parameter GAME_DEFEAT       = 3'b100;
+    parameter GAME_ERROR        = 3'b101;
 
     reg [3:0]   c_Sec0, n_Sec0;
     reg [3:0]   c_Sec1, n_Sec1;
@@ -38,10 +46,32 @@ module Game_FND
     end
 
     always @* begin
-        n_ClkCnt = fLstClk ? 27'd0 : c_ClkCnt + 1;
-        n_Sec0 = fIncSec0 ? fLstSec0 ? 4'b0000 : c_Sec0 + 1 : c_Sec0;
-        n_Sec1 = fIncSec1 ? fLstSec1 ? 4'b0000 : c_Sec1 + 1 : c_Sec1;
-        n_Sec2 = fIncSec2 ? fLstSec2 ? 4'b0000 : c_Sec2 + 1 : c_Sec2;
+        case (i_GameState)
+            GAME_PLAYING: begin
+                n_ClkCnt = fLstClk ? 27'd0 : c_ClkCnt + 1;
+                n_Sec0 = fIncSec0 ? fLstSec0 ? 4'b0000 : c_Sec0 + 1 : c_Sec0;
+                n_Sec1 = fIncSec1 ? fLstSec1 ? 4'b0000 : c_Sec1 + 1 : c_Sec1;
+                n_Sec2 = fIncSec2 ? fLstSec2 ? 4'b0000 : c_Sec2 + 1 : c_Sec2;
+            end
+            GAME_VICTORY: begin
+                n_ClkCnt = c_ClkCnt;
+                n_Sec0 = c_Sec0;
+                n_Sec1 = c_Sec1;
+                n_Sec2 = c_Sec2;
+            end
+            GAME_DEFEAT: begin
+                n_ClkCnt = c_ClkCnt;
+                n_Sec0 = c_Sec0;
+                n_Sec1 = c_Sec1;
+                n_Sec2 = c_Sec2;
+            end
+            default: begin
+                n_ClkCnt = 4'b0000;
+                n_Sec0 = 4'b0000;
+                n_Sec1 = 4'b0000;
+                n_Sec2 = 4'b0000;
+            end
+        endcase
     end
 
 endmodule
