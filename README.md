@@ -25,9 +25,7 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 <br>
 
 # 스터디
-스터디 내용은 [스터디 브랜치](https://github.com/pknu-wap/2024_2_Verilog/tree/Study)에 기록되어 있습니다.
-
-학습한 내용, 실행 코드 등을 참고해주세요.
+스터디 내용은 [스터디 브랜치](https://github.com/pknu-wap/2024_2_Verilog/tree/Study)에 기록되어 있습니다.  학습한 내용, 실행 코드 등을 참고해주세요.
 
 ### 스터디 내용
 - 1주차 : Verilog 기초
