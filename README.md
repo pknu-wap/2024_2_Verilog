@@ -1,6 +1,6 @@
 # VALAGA
-![VALAGA](https://github.com/user-attachments/assets/d5f2dd99-bbe4-4bc5-9880-9646f3e09e16)
 >Verilog + Galaga
+![VALAGA](https://github.com/user-attachments/assets/d5f2dd99-bbe4-4bc5-9880-9646f3e09e16)
 
 FPGA 기반 Galaga 스타일 게임 모듈 구현
 
