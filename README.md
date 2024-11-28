@@ -18,7 +18,8 @@ FPGA 기반 Galaga 스타일 게임 모듈 구현
 <br>
 
 # 개발일정
-[개발일정](https://github.com/user-attachments/assets/9734bc31-8119-4341-a92c-9b18bec2dd7d)
+![개발일정](https://github.com/user-attachments/assets/1eed9ea1-ef9a-4ce2-974e-5cde979567e3)
+
 
 <br>
 <br>
