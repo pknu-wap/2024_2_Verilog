@@ -27,82 +27,84 @@ module Game_Collision;
     // ##############################################################
     // assign
     // Collision
-    for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin :EBPBCCO
-        for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin :EBPBCCI
-            assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
-                                                                c_EnemyBulletPosition[ii], 
-                                                                c_PlayerBulletPosition[jj], 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT, 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT
-                                                            ) ? 1'b1 : 1'b0;
-        end
-        assign  fEnemyBullet_VS_PlayerBullet[ii]    = |fEnemyBullet_VS_PlayerBullet_Each[ii] ? 1'b1 : 1'b0;
-        assign  fEnemyBullet_VS_Player[ii]          = IsCollision(
-                                                        c_EnemyBulletPosition[ii], 
-                                                        {c_PlayerPosition, PLAYER_CENTER_Y}, 
-                                                        BULLET_WIDTH, 
-                                                        BULLET_HEIGHT, 
-                                                        PLAYER_WIDTH, 
-                                                        PLAYER_HEIGHT
-                                                    ) ? 1'b1 : 1'b0;
-        assign  fEnemyBulletCollision[ii]           = fEnemyBullet_VS_PlayerBullet[ii] | fEnemyBullet_VS_Player[ii];
-    end
-
-    for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin
-        for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin
-            assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
-                                                                c_PlayerBulletPosition[k], 
-                                                                c_EnemyBulletPosition[l], 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT, 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT
-                                                            ) ? 1'b1 : 1'b0;
-        end
-        assign  fPlayerBullet_VS_EnemyBullet[k]     = |fPlayerBullet_VS_EnemyBullet_Each[k] ? 1'b1 : 1'b0;
-        for (m = 0; m < MAX_ENEMY; m = m + 1) begin
-            assign  fPlayerBullet_VS_Enemy_Each[k][m]   = IsCollision(
-                                                            c_PlayerBulletPosition[k], 
-                                                            c_EnemyPosition[m], 
+    generate
+        for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin: EnemyBulletCollision
+            for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin: EnemyBulletCollision_VS_PlayerBullet
+                assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
+                                                                    c_EnemyBulletPosition[ii], 
+                                                                    c_PlayerBulletPosition[jj], 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT, 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT
+                                                                ) ? 1'b1 : 1'b0;
+            end
+            assign  fEnemyBullet_VS_PlayerBullet[ii]    = |fEnemyBullet_VS_PlayerBullet_Each[ii] ? 1'b1 : 1'b0;
+            assign  fEnemyBullet_VS_Player[ii]          = IsCollision(
+                                                            c_EnemyBulletPosition[ii], 
+                                                            {c_PlayerPosition, PLAYER_CENTER_Y}, 
                                                             BULLET_WIDTH, 
                                                             BULLET_HEIGHT, 
-                                                            ENEMY_WIDTH, 
-                                                            ENEMY_HEIGHT
+                                                            PLAYER_WIDTH, 
+                                                            PLAYER_HEIGHT
                                                         ) ? 1'b1 : 1'b0;
+            assign  fEnemyBulletCollision[ii]           = fEnemyBullet_VS_PlayerBullet[ii] | fEnemyBullet_VS_Player[ii];
         end
-        assign  fPlayerBullet_VS_Enemy[k]           = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
-        assign  fPlayerBulletCollision[k]           = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
-    end
 
-    for (n = 0; n < MAX_ENEMY; n = n + 1) begin
-        for (o = 0; o < MAX_PLAYER_BULLET; o = o + 1) begin
-            assign  fEnemy_VS_PlayerBullet_Each[n][o]   = IsCollision(
-                                                            c_EnemyPosition[n], 
-                                                            c_PlayerBulletPosition[o], 
-                                                            ENEMY_WIDTH, 
-                                                            ENEMY_HEIGHT, 
+        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin: PlayerBulletCollision
+            for (l = 0; l < MAX_ENEMY_BULLET; l = l + 1) begin: PlayerBulletCollision_VS_EnemyBullet
+                assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
+                                                                    c_PlayerBulletPosition[k], 
+                                                                    c_EnemyBulletPosition[l], 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT, 
+                                                                    BULLET_WIDTH, 
+                                                                    BULLET_HEIGHT
+                                                                ) ? 1'b1 : 1'b0;
+            end
+            assign  fPlayerBullet_VS_EnemyBullet[k]     = |fPlayerBullet_VS_EnemyBullet_Each[k] ? 1'b1 : 1'b0;
+            for (m = 0; m < MAX_ENEMY; m = m + 1) begin: PlayerBulletCollision_VS_Enemy
+                assign  fPlayerBullet_VS_Enemy_Each[k][m]   = IsCollision(
+                                                                c_PlayerBulletPosition[k], 
+                                                                c_EnemyPosition[m], 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT, 
+                                                                ENEMY_WIDTH, 
+                                                                ENEMY_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+            end
+            assign  fPlayerBullet_VS_Enemy[k]           = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
+            assign  fPlayerBulletCollision[k]           = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
+        end
+
+        for (n = 0; n < MAX_ENEMY; n = n + 1) begin: EnemyCollision
+            for (o = 0; o < MAX_PLAYER_BULLET; o = o + 1) begin: EnemyCollision_VS_PlayerBullet
+                assign  fEnemy_VS_PlayerBullet_Each[n][o]   = IsCollision(
+                                                                c_EnemyPosition[n], 
+                                                                c_PlayerBulletPosition[o], 
+                                                                ENEMY_WIDTH, 
+                                                                ENEMY_HEIGHT, 
+                                                                BULLET_WIDTH, 
+                                                                BULLET_HEIGHT
+                                                            ) ? 1'b1 : 1'b0;
+            end
+            assign  fEnemy_VS_PlayerBullet[n]           = |fEnemy_VS_PlayerBullet_Each[n] ? 1'b1 : 1'b0;
+            assign  fEnemyCollision[n]                  = fEnemy_VS_PlayerBullet[n];
+        end
+
+        for (p = 0; p < MAX_ENEMY_BULLET; p = p + 1) begin: PlayerCollision_VS_EnemyBullet
+            assign  fPlayer_VS_EnemyBullet_Each[p]      = IsCollision(
+                                                            {c_PlayerPosition, PLAYER_CENTER_Y}, 
+                                                            c_EnemyBulletPosition[p], 
+                                                            PLAYER_WIDTH, 
+                                                            PLAYER_HEIGHT, 
                                                             BULLET_WIDTH, 
                                                             BULLET_HEIGHT
                                                         ) ? 1'b1 : 1'b0;
         end
-        assign  fEnemy_VS_PlayerBullet[n]           = |fEnemy_VS_PlayerBullet_Each[n] ? 1'b1 : 1'b0;
-        assign  fEnemyCollision[n]                  = fEnemy_VS_PlayerBullet[n];
-    end
-
-    for (p = 0; p < MAX_ENEMY_BULLET; p = p + 1) begin
-        assign  fPlayer_VS_EnemyBullet_Each[p]      = IsCollision(
-                                                        {c_PlayerPosition, PLAYER_CENTER_Y}, 
-                                                        c_EnemyBulletPosition[p], 
-                                                        PLAYER_WIDTH, 
-                                                        PLAYER_HEIGHT, 
-                                                        BULLET_WIDTH, 
-                                                        BULLET_HEIGHT
-                                                    ) ? 1'b1 : 1'b0;
-    end
-    assign  fPlayer_VS_EnemyBullet  = |fPlayer_VS_EnemyBullet_Each ? 1'b1 : 1'b0;
-    assign  fPlayerCollision        = fPlayer_VS_EnemyBullet;
+        assign  fPlayer_VS_EnemyBullet  = |fPlayer_VS_EnemyBullet_Each ? 1'b1 : 1'b0;
+        assign  fPlayerCollision        = fPlayer_VS_EnemyBullet;
+    endgenerate
 
     // ##############################################################
     // function
