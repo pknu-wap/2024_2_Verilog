@@ -92,7 +92,6 @@ module FND_GALAGA(i_Clk, i_Rst,
             4'h7: o_FND = 7'b1111000;
             4'h8: o_FND = 7'b0000000;
             4'h9: o_FND = 7'b0010000;
-    endcase
-
+        endcase
 
 endmodule
