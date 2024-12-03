@@ -1,0 +1,8 @@
+
+State Machine - |VALAGA|c_OnPlayState
+Name c_OnPlayState.ONPLAY_COLLISION c_OnPlayState.ONPLAY_MOVE c_OnPlayState.ONPLAY_CALCVALUE c_OnPlayState.ONPLAY_WAITING c_OnPlayState.ONPLAY_CHECKING 
+c_OnPlayState.ONPLAY_WAITING 0 0 0 0 0 
+c_OnPlayState.ONPLAY_CALCVALUE 0 0 1 1 0 
+c_OnPlayState.ONPLAY_MOVE 0 1 0 1 0 
+c_OnPlayState.ONPLAY_COLLISION 1 0 0 1 0 
+c_OnPlayState.ONPLAY_CHECKING 0 0 0 1 1 

@@ -17,6 +17,7 @@ module VALAGA
 
     Game_FND GFND(i_Clk, i_Rst, c_GameState, o_FND0, o_FND1, o_FND2);
 
+
     // ##############################################################
     // reg
     // input
@@ -43,8 +44,6 @@ module VALAGA
 
     // Game
     reg [2:0]   c_GameState,    n_GameState;
-    reg [2:0]   c_OnPlayState,  n_OnPlayState;
-    reg [3:0]   c_OnPlayCnt,    n_OnPlayCnt;
     reg [1:0]   c_Phase,        n_Phase;
     reg [6:0]   c_PhaseCnt,     n_PhaseCnt;
 
@@ -75,7 +74,6 @@ module VALAGA
     wire fTick;
     wire fLstPhaseCnt, fNextPhase;
     wire fIdle, fInit, fPlaying, fEnding;
-    wire fOnPlayMove, fOnPlayCollision, fOnPlayChecking, fOnPlayWaiting, fOnPlayCalcValue;
     wire fVictory, fDefeat;
 
     // Display
@@ -91,49 +89,24 @@ module VALAGA
     // function
     // Display
     function is_in_range(
-            input [9:0] i_obj_x, i_obj_y, 
-            input [9:0] i_obj_width, i_obj_height, 
+            input [18:0] i_Pos,
+            input [5:0] i_obj_W, i_obj_H, 
             input [9:0] i_n_pixel_x, i_n_pixel_y
         );
 
+        reg [9:0] obj_X;
+		  reg [8:0] obj_Y;
         reg horizontalRange, verticalRange;
         
         begin
-            horizontalRange = (i_n_pixel_x >= i_obj_x) & (i_n_pixel_x < i_obj_x + i_obj_width);
-            verticalRange   = (i_n_pixel_y >= i_obj_y) & (i_n_pixel_y < i_obj_y + i_obj_height);
+            obj_X = i_Pos[18:9];
+            obj_Y = i_Pos[8:0];
+            horizontalRange = (i_n_pixel_x >= obj_X) & (i_n_pixel_x < obj_X + i_obj_W);
+            verticalRange   = (i_n_pixel_y >= obj_Y) & (i_n_pixel_y < obj_Y + i_obj_H);
             is_in_range     = horizontalRange & verticalRange;
         end
     endfunction
 
-    // Collision
-    function IsCollision
-        (
-            input   [18:0]  i_APosition, 
-            input   [18:0]  i_BPosition, 
-            input   [9:0]   i_AWidth, 
-            input   [8:0]   i_AHeight, 
-            input   [9:0]   i_BWidth, 
-            input   [8:0]   i_BHeight
-        );
-
-        reg         horizontalCollision;
-        reg         verticalCollision;
-        reg [9:0]   Ax1, Ax2, Bx1, Bx2;
-        reg [8:0]   Ay1, Ay2, By1, By2;
-
-        begin
-            {Ax1, Ay1}          = i_APosition;
-            {Bx1, By1}          = i_BPosition;
-            {Ax2, Ay2}          = {Ax1 + i_AWidth, Ay1 + i_AHeight};
-            {Bx2, By2}          = {Bx1 + i_BWidth, By1 + i_BHeight};
-
-            horizontalCollision = ~((Ax2 <= Bx1) | (Ax1 >= Bx2));
-            verticalCollision   = ~((Ay2 <= By1) | (Ay1 >= By2));
-            
-            IsCollision         = horizontalCollision & verticalCollision;
-        end
-    endfunction
-    
     // ##############################################################
     // assign
     assign 
@@ -152,7 +125,6 @@ module VALAGA
 
     // Bullet
     assign fEnemyShoot  = fLstPhaseCnt;
-    //assign fEnemyShoot  = fLstPhaseCnt & fOnPlayCollision | fLstPhaseCnt & fOnPlayMove;
 	 
     generate
         for (x = 0; x < 30; x = x + 1) begin :EnemyBulletBoundCheck
@@ -180,13 +152,6 @@ module VALAGA
         fPlaying    = c_GameState == GAME_PLAYING,
         fEnding     = c_GameState == GAME_DEFEAT | c_GameState == GAME_VICTORY;
 
-    assign
-        fOnPlayWaiting      = c_OnPlayState == ONPLAY_WAITING,
-        fOnPlayCalcValue    = c_OnPlayState == ONPLAY_CALCVALUE,
-        fOnPlayMove         = c_OnPlayState == ONPLAY_MOVE,
-        fOnPlayCollision    = c_OnPlayState == ONPLAY_COLLISION,
-        fOnPlayChecking     = c_OnPlayState == ONPLAY_CHECKING;
-
     assign 
         fLstPhaseCnt = c_PhaseCnt == MAX_PHASE_CNT,
         fNextPhase   = fLstPhaseCnt;
@@ -213,52 +178,45 @@ module VALAGA
     
     // ##############################################################
     // Object Detection
-    assign fPlayerPixel = is_in_range(PlayerPosition_X, {1'b0, PlayerPosition_Y}, PLAYER_WIDTH, {1'b0, PLAYER_HEIGHT}, c_PixelPos_X, c_PixelPos_Y);
-
     generate
+        assign fPlayerPixel = is_in_range(c_PlayerPosition, PLAYER_WIDTH, PLAYER_HEIGHT, c_PixelPos_X, c_PixelPos_Y);
+            
         for (gen_i = 0; gen_i < MAX_PLAYER_BULLET; gen_i = gen_i + 1) begin :PlayerBulletObjectDetection
             assign fPlayerBulletPixel_Each[gen_i]   = is_in_range(
-                                                        c_PlayerBulletPosition[gen_i][18:9], 
-                                                        {1'b0, c_PlayerBulletPosition[gen_i][8:0]},
+                                                        c_PlayerBulletPosition[gen_i],
                                                         BULLET_WIDTH, 
-                                                        {1'b0, BULLET_HEIGHT}, 
+                                                        BULLET_HEIGHT, 
                                                         c_PixelPos_X, 
                                                         c_PixelPos_Y
                                                     );
         end
-    endgenerate
-    assign fPlayerBulletPixel   = |fPlayerBulletPixel_Each;
+        assign fPlayerBulletPixel   = |fPlayerBulletPixel_Each;
 
-    generate
         for (gen_j = 0; gen_j < MAX_ENEMY; gen_j = gen_j + 1) begin :EnemyObjectDetection
             assign fEnemyPixel_Each[gen_j]          = is_in_range(
-                                                        c_EnemyPosition[gen_j][18:9], 
-                                                        {1'b0, c_EnemyPosition[gen_j][8:0]}, 
+                                                        c_EnemyPosition[gen_j], 
                                                         ENEMY_WIDTH, 
-                                                        {1'b0, ENEMY_HEIGHT}, 
+                                                        ENEMY_HEIGHT, 
                                                         c_PixelPos_X, 
                                                         c_PixelPos_Y
                                                     );
         end
-    endgenerate
-    assign fEnemyPixel          = |fEnemyPixel_Each;
+        assign fEnemyPixel          = |fEnemyPixel_Each;
 
-    generate
         for (gen_k = 0; gen_k < 30; gen_k = gen_k + 1) begin :EnemyBulletObjectDetection
             assign fEnemyBulletPixel_Each[gen_k]    =   is_in_range(
-                                                            c_EnemyBulletPosition[gen_k][18:9], 
-                                                            {1'b0, c_EnemyBulletPosition[gen_k][8:0]}, 
+                                                            c_EnemyBulletPosition[gen_k], 
                                                             BULLET_WIDTH, 
-                                                            {1'b0, BULLET_HEIGHT}, 
+                                                            BULLET_HEIGHT, 
                                                             c_PixelPos_X, 
                                                             c_PixelPos_Y
                                                         );
         end
+        assign fEnemyBulletPixel = |fEnemyBulletPixel_Each;
     endgenerate
-    assign fEnemyBulletPixel = |fEnemyBulletPixel_Each;
 
     assign
-        o_Red   = fEnemyPixel ? 8'b11111111 : 0,
+        o_Red   = fEnemyPixel | fEnemyBulletPixel ? 8'b11111111 : 0,
         o_Green = fPlayerBulletPixel | fEnemyBulletPixel ? 8'b11111111 : 0,
         o_Blue  = fPlayerPixel ? 8'b11111111 : 0;
 
@@ -283,114 +241,50 @@ module VALAGA
     wire                            fPlayer_VS_EnemyBullet;
     wire                            fPlayerCollision;
 
+    genvar dont, make, me, angry, anymore;
+    
     generate
-        for (ii = 0; ii < 30; ii = ii + 1) begin: EnemyBulletCollision
-            for (jj = 0; jj < MAX_PLAYER_BULLET; jj = jj + 1) begin: EnemyBulletCollision_VS_PlayerBullet
-                assign  fEnemyBullet_VS_PlayerBullet_Each[ii][jj] = IsCollision(
-                                                                    c_EnemyBulletPosition[ii], 
-                                                                    c_PlayerBulletPosition[jj], 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT, 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT
-                                                                ) ? 1'b1 : 1'b0;
-            end
-            assign  fEnemyBullet_VS_PlayerBullet[ii]    = |fEnemyBullet_VS_PlayerBullet_Each[ii] ? 1'b1 : 1'b0;
-            assign  fEnemyBullet_VS_Player[ii]          = IsCollision(
-                                                            c_EnemyBulletPosition[ii], 
-                                                            {c_PlayerPosition, PLAYER_CENTER_Y}, 
-                                                            BULLET_WIDTH, 
-                                                            BULLET_HEIGHT, 
-                                                            PLAYER_WIDTH, 
-                                                            PLAYER_HEIGHT
-                                                        ) ? 1'b1 : 1'b0;
-            assign  fEnemyBulletCollision[ii]           = fEnemyBullet_VS_PlayerBullet[ii] | fEnemyBullet_VS_Player[ii];
+        for (dont = 0; dont < 30; dont = dont + 1) begin : PvsEBModuleGen
+            CollisionCheck CC0(c_PlayerPosition, c_EnemyBulletPosition[dont], PLAYER_WIDTH, PLAYER_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT, fPlayer_VS_EnemyBullet_Each[dont], fEnemyBullet_VS_Player[dont]);
         end
 
-        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin: PlayerBulletCollision
-            for (l = 0; l < 30; l = l + 1) begin: PlayerBulletCollision_VS_EnemyBullet
-                assign  fPlayerBullet_VS_EnemyBullet_Each[k][l] = IsCollision(
-                                                                    c_PlayerBulletPosition[k], 
-                                                                    c_EnemyBulletPosition[l], 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT, 
-                                                                    BULLET_WIDTH, 
-                                                                    BULLET_HEIGHT
-                                                                ) ? 1'b1 : 1'b0;
+        for (make = 0; make < MAX_PLAYER_BULLET; make = make + 1) begin : PBvsEBModuleGenOuter
+            for (me = 0; me < 30; me = me + 1) begin : PBvsEBModuleGenInner
+                CollisionCheck CC1(c_PlayerBulletPosition[make], c_EnemyBulletPosition[me], BULLET_WIDTH, BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT, fPlayerBullet_VS_EnemyBullet_Each[make][me], fEnemyBullet_VS_PlayerBullet_Each[me][make]);
             end
-            assign  fPlayerBullet_VS_EnemyBullet[k]     = |fPlayerBullet_VS_EnemyBullet_Each[k] ? 1'b1 : 1'b0;
-            for (m = 0; m < MAX_ENEMY; m = m + 1) begin: PlayerBulletCollision_VS_Enemy
-                assign  fPlayerBullet_VS_Enemy_Each[k][m]   = IsCollision(
-                                                                c_PlayerBulletPosition[k], 
-                                                                c_EnemyPosition[m], 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT, 
-                                                                ENEMY_WIDTH, 
-                                                                ENEMY_HEIGHT
-                                                            ) ? 1'b1 : 1'b0;
-            end
-            assign  fPlayerBullet_VS_Enemy[k]           = |fPlayerBullet_VS_Enemy_Each[k] ? 1'b1 : 1'b0;
-            assign  fPlayerBulletCollision[k]           = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
+
+            assign fPlayerBullet_VS_EnemyBullet[make] = |fPlayerBullet_VS_EnemyBullet_Each[make];
         end
 
-        for (n = 0; n < MAX_ENEMY; n = n + 1) begin: EnemyCollision
-            for (o = 0; o < MAX_PLAYER_BULLET; o = o + 1) begin: EnemyCollision_VS_PlayerBullet
-                assign  fEnemy_VS_PlayerBullet_Each[n][o]   = IsCollision(
-                                                                c_EnemyPosition[n], 
-                                                                c_PlayerBulletPosition[o], 
-                                                                ENEMY_WIDTH, 
-                                                                ENEMY_HEIGHT, 
-                                                                BULLET_WIDTH, 
-                                                                BULLET_HEIGHT
-                                                            ) ? 1'b1 : 1'b0;
+        for (angry = 0; angry < MAX_PLAYER_BULLET; angry = angry + 1) begin : PBvsEModuleGenOuter
+            for (anymore = 0; anymore < MAX_ENEMY; anymore = anymore + 1) begin : PBvsEModuleGenInner
+                CollisionCheck CC1(c_PlayerBulletPosition[angry], c_EnemyPosition[anymore], BULLET_WIDTH, BULLET_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, fPlayerBullet_VS_Enemy_Each[angry][anymore], fEnemy_VS_PlayerBullet_Each[anymore][angry]);
             end
-            assign  fEnemy_VS_PlayerBullet[n]           = |fEnemy_VS_PlayerBullet_Each[n] ? 1'b1 : 1'b0;
-            assign  fEnemyCollision[n]                  = fEnemy_VS_PlayerBullet[n];
+
+            assign fPlayerBullet_VS_Enemy[angry] = |fPlayerBullet_VS_Enemy_Each[angry];
         end
 
-        for (p = 0; p < 30; p = p + 1) begin: PlayerCollision_VS_EnemyBullet
-            assign  fPlayer_VS_EnemyBullet_Each[p]      = IsCollision(
-                                                            {c_PlayerPosition, PLAYER_CENTER_Y}, 
-                                                            c_EnemyBulletPosition[p], 
-                                                            PLAYER_WIDTH, 
-                                                            PLAYER_HEIGHT, 
-                                                            BULLET_WIDTH, 
-                                                            BULLET_HEIGHT
-                                                        ) ? 1'b1 : 1'b0;
+
+        for (ii = 0; ii < 30; ii = ii + 1) begin: EBvsPBasdf
+            assign fEnemyBullet_VS_PlayerBullet[ii] = |fEnemyBullet_VS_PlayerBullet_Each[ii];
         end
-        assign  fPlayer_VS_EnemyBullet  = |fPlayer_VS_EnemyBullet_Each ? 1'b1 : 1'b0;
-        assign  fPlayerCollision        = fPlayer_VS_EnemyBullet;
+
+
+
+        assign fPlayerCollision = |fPlayer_VS_EnemyBullet_Each;
+
+        for (jj = 0; jj < MAX_ENEMY; jj = jj + 1) begin: ajfsd
+            assign fEnemyCollision[jj] = |fEnemy_VS_PlayerBullet_Each[jj];
+        end
+
+        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin: joprewjritgw
+            assign fPlayerBulletCollision[k] = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
+        end
+
+        for (n = 0; n < 30; n = n + 1) begin: oisdajf
+            assign  fEnemyBulletCollision[n] = fEnemyBullet_VS_PlayerBullet[n] | fEnemyBullet_VS_Player[n];
+        end
     endgenerate
-
-    // Debug
-    // TODO : Delete Debug Data
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    wire [9:0] EnemyPosition_X [MAX_ENEMY-1:0];
-    wire [8:0] EnemyPosition_Y [MAX_ENEMY-1:0];
-
-    generate    
-        for (t = 0; t < MAX_ENEMY; t = t + 1) begin :EnemyPosition
-            assign 
-                EnemyPosition_X[t] = c_EnemyPosition[t][18:9],
-                EnemyPosition_Y[t] = c_EnemyPosition[t][ 8:0];
-        end
-    endgenerate    
-    
-    wire [9:0] EnemyBulletPosition_X [30-1:0];
-    wire [8:0] EnemyBulletPosition_Y [30-1:0];
-
-    generate    
-        for (t = 0; t < 30; t = t + 1) begin :EnemyBullet
-            assign 
-                EnemyBulletPosition_X[t] = c_EnemyBulletPosition[t][18:9],
-                EnemyBulletPosition_Y[t] = c_EnemyBulletPosition[t][ 8:0];
-        end
-    endgenerate    
-
-    wire [8:0] PlayerBulletPosition_Y;
-    
-    assign PlayerBulletPosition_Y = c_PlayerBulletPosition[0][ 8:0];
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     // ##############################################################
     always @(negedge i_Rst, posedge i_Clk) begin
@@ -422,8 +316,6 @@ module VALAGA
             c_PlayerBulletCnt       = 0;
 
             c_GameState             = GAME_IDLE;
-            c_OnPlayState           = ONPLAY_WAITING;
-            c_OnPlayCnt             = 0;
 
             c_Phase                 = 0;
             c_PhaseCnt              = 0;
@@ -459,8 +351,6 @@ module VALAGA
             c_PlayerBulletCnt       = n_PlayerBulletCnt;
 
             c_GameState             = n_GameState;
-            c_OnPlayState           = n_OnPlayState;
-            c_OnPlayCnt             = n_OnPlayCnt;
 
             c_Phase                 = n_Phase;
             c_PhaseCnt              = n_PhaseCnt;
@@ -507,8 +397,6 @@ module VALAGA
         n_PlayerShootPushed     = c_PlayerShootPushed;
 
         n_GameState             = c_GameState;
-        n_OnPlayState           = c_OnPlayState;
-        n_OnPlayCnt             = c_OnPlayCnt;
 
         n_Phase                 = c_Phase;
         n_PhaseCnt              = c_PhaseCnt;
@@ -543,9 +431,6 @@ module VALAGA
                     n_PlayerBulletPosition[i] = NONE;
                 end
 
-                n_OnPlayState           = ONPLAY_WAITING;
-                n_OnPlayCnt             = 0;
-
                 n_Phase                 = PHASE_1;
                 n_PhaseCnt              = 0;
 
@@ -553,13 +438,6 @@ module VALAGA
             end
 
             GAME_PLAYING: begin
-                n_OnPlayState           =
-                    fOnPlayWaiting & fTick  ? ONPLAY_CALCVALUE : 
-                    fOnPlayCalcValue        ? ONPLAY_MOVE :
-                    fOnPlayMove             ? ONPLAY_COLLISION :
-                    fOnPlayCollision        ? ONPLAY_CHECKING :
-                    fOnPlayChecking         ? ONPLAY_WAITING : c_OnPlayState;
-
                 // Calculate Value
                 n_Phase                 = fTick & fNextPhase ? c_Phase + 1 : c_Phase;
                 n_PhaseCnt              = fTick ? (fLstPhaseCnt ? 0 : c_PhaseCnt + 1) : c_PhaseCnt;
@@ -572,9 +450,13 @@ module VALAGA
 
                 // Moving
                 for (i = 0; i < MAX_ENEMY_ROW; i = i + 1) begin
-                    n_EnemyPosition[i   ][18:9] = c_EnemyState[i] ? (fTick ? ( (^c_Phase) ? c_EnemyPosition[i   ][18:9] + 1 : n_EnemyPosition[i   ][18:9] - 1) : c_EnemyPosition[i   ][18:9]) : NONE;
-                    n_EnemyPosition[i+ 5][18:9] = c_EnemyState[i] ? (fTick ? (!(^c_Phase) ? c_EnemyPosition[i+ 5][18:9] + 1 : n_EnemyPosition[i+ 5][18:9] - 1) : c_EnemyPosition[i+ 5][18:9]) : NONE;
-                    n_EnemyPosition[i+10][18:9] = c_EnemyState[i] ? (fTick ? ( (^c_Phase) ? c_EnemyPosition[i+10][18:9] + 1 : n_EnemyPosition[i+10][18:9] - 1) : c_EnemyPosition[i+10][18:9]) : NONE;
+                    n_EnemyPosition[i   ][18:9] = c_EnemyState[i   ] ? (fTick ? ( (^c_Phase) ? c_EnemyPosition[i   ][18:9] + 1 : n_EnemyPosition[i   ][18:9] - 1) : c_EnemyPosition[i   ][18:9]) : 10'd720;
+                    n_EnemyPosition[i+ 5][18:9] = c_EnemyState[i+ 5] ? (fTick ? (!(^c_Phase) ? c_EnemyPosition[i+ 5][18:9] + 1 : n_EnemyPosition[i+ 5][18:9] - 1) : c_EnemyPosition[i+ 5][18:9]) : 10'd720;
+                    n_EnemyPosition[i+10][18:9] = c_EnemyState[i+10] ? (fTick ? ( (^c_Phase) ? c_EnemyPosition[i+10][18:9] + 1 : n_EnemyPosition[i+10][18:9] - 1) : c_EnemyPosition[i+10][18:9]) : 10'd720;
+
+                    n_EnemyPosition[i   ][8:0] = c_EnemyState[i   ] ? n_EnemyPosition[i   ][8:0] : 9'd500;
+                    n_EnemyPosition[i+ 5][8:0] = c_EnemyState[i+ 5] ? n_EnemyPosition[i+ 5][8:0] : 9'd500;
+                    n_EnemyPosition[i+10][8:0] = c_EnemyState[i+10] ? n_EnemyPosition[i+10][8:0] : 9'd500;
                 end
 
                 for (i = 0; i < MAX_ENEMY; i = i + 1) begin
@@ -610,7 +492,7 @@ module VALAGA
 
                 // Game Over Check
 
-                if (!(&c_EnemyState))       n_GameState = GAME_VICTORY;
+                if (~|c_EnemyState)         n_GameState = GAME_VICTORY;
                 else if (!c_PlayerState)    n_GameState = GAME_DEFEAT;
                 else if (fGameStartStop)    n_GameState = GAME_IDLE;
             end

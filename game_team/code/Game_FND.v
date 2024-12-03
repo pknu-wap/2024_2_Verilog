@@ -5,7 +5,7 @@ module Game_FND
         output	[6:0]	o_FND0, o_FND1, o_FND2
     );
 
-    parameter LST_CLK = 1_000_000_000 / 20 - 1;
+    parameter LST_CLK = 100_000_000 / 20 - 1;
 
     parameter GAME_IDLE         = 3'b000;
     parameter GAME_INIT         = 3'b001;
