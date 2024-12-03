@@ -26,10 +26,10 @@ module VALAGA
     
     // Entity
     reg [MAX_ENEMY-1:0]         c_EnemyState,       n_EnemyState;
-    reg [30-1:0]  c_EnemyBulletState, n_EnemyBulletState;
+    reg [MAX_ENEMY_BULLET-1:0]  c_EnemyBulletState, n_EnemyBulletState;
                 
     reg [18:0]  c_EnemyPosition         [MAX_ENEMY-1:0],        n_EnemyPosition         [MAX_ENEMY-1:0];
-    reg [18:0]  c_EnemyBulletPosition   [30-1:0], n_EnemyBulletPosition   [30-1:0];
+    reg [18:0]  c_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0], n_EnemyBulletPosition   [MAX_ENEMY_BULLET-1:0];
     reg         c_EnemyBulletFlag,                              n_EnemyBulletFlag;
                 
     reg [3:0]   c_PlayerBulletCnt,      n_PlayerBulletCnt;
@@ -65,7 +65,7 @@ module VALAGA
     
     // Bullet
     wire fEnemyShoot;
-    wire [30-1:0]     fEnemyBulletOutOfBound;
+    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletOutOfBound;
     wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletOutOfBound;
 
     wire fPlayerCanShoot, fPlayerShoot;
@@ -79,11 +79,10 @@ module VALAGA
     // Display
     wire hDrawDone, vDrawDone, fDrawDone;
     wire fPlayerPixel, fPlayerBulletPixel, fEnemyPixel, fEnemyBulletPixel;
-    wire pixelState;
 
     wire [MAX_PLAYER_BULLET-1:0]    fPlayerBulletPixel_Each;
     wire [MAX_ENEMY-1:0]            fEnemyPixel_Each;
-    wire [30-1:0]     fEnemyBulletPixel_Each;
+    wire [MAX_ENEMY_BULLET-1:0]     fEnemyBulletPixel_Each;
 
     // ##############################################################
     // function
@@ -127,12 +126,10 @@ module VALAGA
     assign fEnemyShoot  = fLstPhaseCnt;
 	 
     generate
-        for (x = 0; x < 30; x = x + 1) begin :EnemyBulletBoundCheck
+        for (x = 0; x < MAX_ENEMY_BULLET; x = x + 1) begin :EnemyBulletBoundCheck
             assign fEnemyBulletOutOfBound[x] = c_EnemyBulletPosition[x][8:0] == VERTICAL_BORDER;
         end
-    endgenerate
 
-    generate
         for (e = 0; e < MAX_PLAYER_BULLET; e = e + 1) begin :PlayerBulletBoundCheck
             assign fPlayerBulletOutOfBound[e] = ~(|c_PlayerBulletPosition[e][8:0]);
         end
@@ -171,11 +168,6 @@ module VALAGA
         vDrawDone 	= c_PixelPos_Y == V_DISPLAY - 1,
         fDrawDone  = hDrawDone & vDrawDone;
     
-    assign pixelState = fPlayerPixel         ? 3'b001 :
-                        fPlayerBulletPixel   ? 3'b010 :
-                        fEnemyBulletPixel    ? 3'b100 :
-                        fEnemyPixel          ? 3'b011 : 3'b000;
-    
     // ##############################################################
     // Object Detection
     generate
@@ -203,7 +195,7 @@ module VALAGA
         end
         assign fEnemyPixel          = |fEnemyPixel_Each;
 
-        for (gen_k = 0; gen_k < 30; gen_k = gen_k + 1) begin :EnemyBulletObjectDetection
+        for (gen_k = 0; gen_k < MAX_ENEMY_BULLET; gen_k = gen_k + 1) begin :EnemyBulletObjectDetection
             assign fEnemyBulletPixel_Each[gen_k]    =   is_in_range(
                                                             c_EnemyBulletPosition[gen_k], 
                                                             BULLET_WIDTH, 
@@ -222,12 +214,12 @@ module VALAGA
 
     // ##############################################################
     // Collision
-    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [30-1:0];
-    wire    [30-1:0]  fEnemyBullet_VS_PlayerBullet;
-    wire    [30-1:0]  fEnemyBullet_VS_Player;
-    wire    [30-1:0]  fEnemyBulletCollision;
+    wire    [MAX_PLAYER_BULLET-1:0] fEnemyBullet_VS_PlayerBullet_Each   [MAX_ENEMY_BULLET-1:0];
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_PlayerBullet;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBullet_VS_Player;
+    wire    [MAX_ENEMY_BULLET-1:0]  fEnemyBulletCollision;
 
-    wire    [30-1:0]  fPlayerBullet_VS_EnemyBullet_Each   [MAX_PLAYER_BULLET-1:0];
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayerBullet_VS_EnemyBullet_Each   [MAX_PLAYER_BULLET-1:0];
     wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_EnemyBullet;
     wire    [MAX_ENEMY-1:0]         fPlayerBullet_VS_Enemy_Each         [MAX_PLAYER_BULLET-1:0];
     wire    [MAX_PLAYER_BULLET-1:0] fPlayerBullet_VS_Enemy;
@@ -237,26 +229,24 @@ module VALAGA
     wire    [MAX_ENEMY-1:0]         fEnemy_VS_PlayerBullet;
     wire    [MAX_ENEMY-1:0]         fEnemyCollision;
 
-    wire    [30-1:0]  fPlayer_VS_EnemyBullet_Each;
+    wire    [MAX_ENEMY_BULLET-1:0]  fPlayer_VS_EnemyBullet_Each;
     wire                            fPlayer_VS_EnemyBullet;
     wire                            fPlayerCollision;
 
     genvar dont, make, me, angry, anymore;
     
     generate
-        for (dont = 0; dont < 30; dont = dont + 1) begin : PvsEBModuleGen
+        for (dont = 0; dont < MAX_ENEMY_BULLET; dont = dont + 1) begin : PvsEBModuleGen
             CollisionCheck CC0(c_PlayerPosition, c_EnemyBulletPosition[dont], PLAYER_WIDTH, PLAYER_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT, fPlayer_VS_EnemyBullet_Each[dont], fEnemyBullet_VS_Player[dont]);
         end
 
         for (make = 0; make < MAX_PLAYER_BULLET; make = make + 1) begin : PBvsEBModuleGenOuter
-            for (me = 0; me < 30; me = me + 1) begin : PBvsEBModuleGenInner
+            for (me = 0; me < MAX_ENEMY_BULLET; me = me + 1) begin : PBvsEBModuleGenInner
                 CollisionCheck CC1(c_PlayerBulletPosition[make], c_EnemyBulletPosition[me], BULLET_WIDTH, BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT, fPlayerBullet_VS_EnemyBullet_Each[make][me], fEnemyBullet_VS_PlayerBullet_Each[me][make]);
             end
 
             assign fPlayerBullet_VS_EnemyBullet[make] = |fPlayerBullet_VS_EnemyBullet_Each[make];
-        end
 
-        for (angry = 0; angry < MAX_PLAYER_BULLET; angry = angry + 1) begin : PBvsEModuleGenOuter
             for (anymore = 0; anymore < MAX_ENEMY; anymore = anymore + 1) begin : PBvsEModuleGenInner
                 CollisionCheck CC1(c_PlayerBulletPosition[angry], c_EnemyPosition[anymore], BULLET_WIDTH, BULLET_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, fPlayerBullet_VS_Enemy_Each[angry][anymore], fEnemy_VS_PlayerBullet_Each[anymore][angry]);
             end
@@ -264,24 +254,23 @@ module VALAGA
             assign fPlayerBullet_VS_Enemy[angry] = |fPlayerBullet_VS_Enemy_Each[angry];
         end
 
-
-        for (ii = 0; ii < 30; ii = ii + 1) begin: EBvsPBasdf
+        for (ii = 0; ii < MAX_ENEMY_BULLET; ii = ii + 1) begin: EBvsPBasdf
             assign fEnemyBullet_VS_PlayerBullet[ii] = |fEnemyBullet_VS_PlayerBullet_Each[ii];
         end
 
 
-
+        // Final Collision Check
         assign fPlayerCollision = |fPlayer_VS_EnemyBullet_Each;
 
-        for (jj = 0; jj < MAX_ENEMY; jj = jj + 1) begin: ajfsd
+        for (jj = 0; jj < MAX_ENEMY; jj = jj + 1) begin: EnemyBulletCollision
             assign fEnemyCollision[jj] = |fEnemy_VS_PlayerBullet_Each[jj];
         end
 
-        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin: joprewjritgw
+        for (k = 0; k < MAX_PLAYER_BULLET; k = k + 1) begin: PlayerBulletCollision
             assign fPlayerBulletCollision[k] = fPlayerBullet_VS_EnemyBullet[k] | fPlayerBullet_VS_Enemy[k];
         end
 
-        for (n = 0; n < 30; n = n + 1) begin: oisdajf
+        for (n = 0; n < MAX_ENEMY_BULLET; n = n + 1) begin: EnemyBulletCollision
             assign  fEnemyBulletCollision[n] = fEnemyBullet_VS_PlayerBullet[n] | fEnemyBullet_VS_Player[n];
         end
     endgenerate
@@ -417,7 +406,7 @@ module VALAGA
                     end
                 end
 
-                for (i = 0; i < 30; i = i + 1) begin
+                for (i = 0; i < MAX_ENEMY_BULLET; i = i + 1) begin
                     n_EnemyBulletPosition[i] = NONE;
                     n_EnemyBulletState[i]    = 0;
                 end
